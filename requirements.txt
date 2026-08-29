@@ -1,0 +1,14 @@
+# Controller (Week 5)
+os-ken
+webob
+
+# Classifier (Week 6)
+scapy
+scikit-learn
+joblib
+
+# Integration (Week 7)
+requests
+
+# Note: Mininet itself (topology/topo.py) is installed system-wide via
+# apt/the Mininet install script inside WSL2 Ubuntu, not via pip.

@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Experimental / backup files
+*.bak
+*.backup
+*.before-*
+
+# Generated ML models
+*.joblib
+
+# Logs and captures
+*.log
+*.pcap
+*.pcapng
+
+# OS/editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Node.js / frontend dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node_modules/
+
+# Frontend build output
+build/
+
+# Runtime-generated dashboard data
+dashboard/backend/metrics_store.json
+dashboard/backend/metrics_store_backup_before_task5.json

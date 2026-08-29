@@ -1,0 +1,111 @@
+% =====================================================================
+% System Implementation (Weeks 5-8) -- paste into main.tex where the
+% Month 2 / implementation section belongs. Uses the same \cite keys as
+% the Review 1 paper (adjust to your actual BibTeX keys if they differ:
+% gorkemli2015 -> IEEE 7130421, shahriar2024 -> arXiv:2403.15975,
+% deo2024 -> PeerJ CS 2024, serag2025 -> Springer JNSM 2025).
+%
+% Preamble requirements (add once to main.tex if not already present):
+%   \usepackage{algorithm}
+%   \usepackage{algpseudocode}   % or \usepackage{algorithmic} for older style
+% =====================================================================
+
+\section{System Implementation}
+\label{sec:implementation}
+
+Having established the baseline degradation of real-time traffic under
+contention in Section~\ref{sec:baseline}\footnote{Reference to the Review 1
+baseline measurement section; rename to match your actual section label.},
+this section describes the implementation of the four-layer pipeline that
+addresses it: an SDN priority engine, a behavioral traffic classifier, the
+integration bridge connecting the two, and a live monitoring dashboard.
+
+\subsection{SDN-Based Priority Engine}
+\label{subsec:priority-engine}
+
+The priority engine is implemented as an os-ken\footnote{os-ken is the
+actively maintained fork of the now-unmaintained Ryu SDN framework.}
+controller application operating over OpenFlow~1.3 on an Open vSwitch
+instance within a Mininet-emulated topology. Rather than a strict
+precedence queue -- shown by Gorkemli et al.~\cite{gorkemli2015} to starve
+lower-priority flows entirely under sustained contention -- we implement a
+three-tier, fairness-aware scheme with a guaranteed minimum-bandwidth floor
+per tier, following the bandwidth-splitting formulation of
+Shahriar et al.~\cite{shahriar2024}.
+
+Each tier is bound to a Linux-HTB queue on the switch's egress port:
+
+\begin{itemize}
+  \item \textbf{Tier 0 (Real-time):} minimum 6~Mbps, maximum 10~Mbps, highest scheduling priority.
+  \item \textbf{Tier 1 (Best-effort):} minimum 2~Mbps, maximum 8~Mbps.
+  \item \textbf{Tier 2 (Bulk):} minimum 1~Mbps (guaranteed floor), maximum 10~Mbps.
+\end{itemize}
+
+Algorithm~\ref{alg:bandwidth-split} summarizes the bandwidth-allocation
+logic implemented by \texttt{priority\_controller.py}, adapted from
+Algorithm~2 of Shahriar et al.~\cite{shahriar2024}.
+
+\begin{algorithm}[t]
+\caption{Tiered Bandwidth Allocation (adapted from \cite{shahriar2024})}
+\label{alg:bandwidth-split}
+\begin{algorithmic}[1]
+\REQUIRE Flow $f$, predicted tier $t \in \{\text{realtime}, \text{besteffort}, \text{bulk}\}$, link capacity $C$
+\STATE $q \gets \textsc{QueueForTier}(t)$
+\IF{priority engine is enabled}
+    \STATE install OpenFlow rule: match $f$, action \texttt{SetQueue}($q$), output normal
+\ELSE
+    \STATE install OpenFlow rule: match $f$, action output normal \COMMENT{no differentiation, reproduces baseline}
+\ENDIF
+\STATE guarantee $\text{min\_rate}(q) > 0$ for every $q$ \COMMENT{starvation-safe floor}
+\end{algorithmic}
+\end{algorithm}
+
+A REST interface exposed by the controller (\texttt{/classify},
+\texttt{/toggle}, \texttt{/status}) decouples flow-priority decisions from
+rule installation, so that the classifier (Section~\ref{subsec:classifier})
+and dashboard (Section~\ref{subsec:dashboard}) can drive the engine without
+depending on OpenFlow internals directly.
+
+\subsection{Behavioral Traffic Classifier}
+\label{subsec:classifier}
+
+Classification is performed without manual tagging or static port/IP
+rules, addressing the limitation of static IP/port-based prioritization
+identified by Deo et al.~\cite{deo2024}. For each flow, a rolling window of
+20 packets is used to compute five behavioral features: mean and standard
+deviation of packet size, mean and standard deviation of inter-arrival
+time, and a burstiness ratio (coefficient of variation of inter-arrival
+time). These features follow the classification pipeline of
+Serag et al.~\cite{serag2025}, who show that packet-size and timing
+statistics alone are sufficient to distinguish interactive from bulk
+traffic without deep packet inspection.
+
+A shallow decision tree (maximum depth 4) is trained on labeled flow
+samples and used for live prediction; an interpretable rule-based fallback
+is retained for cases where a trained model is unavailable, ensuring the
+pipeline degrades gracefully rather than failing silently.
+
+\subsection{Integration Pipeline}
+\label{subsec:integration}
+
+The integration layer connects the classifier's live output to the
+controller's REST interface: as each flow accumulates a full feature
+window, its predicted tier is pushed to \texttt{/classify}, which installs
+the corresponding OpenFlow rule with no human intervention. This closes
+the loop between detection (Section~\ref{subsec:classifier}) and
+enforcement (Section~\ref{subsec:priority-engine}) that, per our gap
+synthesis in the literature review, no single prior system combines
+end-to-end.
+
+\subsection{Live Monitoring Dashboard}
+\label{subsec:dashboard}
+
+A React/Node.js dashboard subscribes over WebSocket to a rolling metrics
+feed (per-tier jitter, derived from the same inter-arrival statistics used
+for classification) and exposes a single control: an ON/OFF toggle for the
+priority engine. Toggling the engine calls the controller's
+\texttt{/toggle} endpoint, which re-installs flows either with per-tier
+queue differentiation (engine ON) or with uniform best-path forwarding
+(engine OFF) -- allowing the baseline-vs-QoS comparison from
+Section~\ref{sec:baseline} to be reproduced live, on demand, for
+demonstration purposes.
