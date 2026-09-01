@@ -51,20 +51,6 @@ wiring them into one working pipeline and demonstrating it.
 
 ---
 
-## Team
-
-| Member | Lane |
-|---|---|
-| Monica R | QoS measurement — baseline + post-QoS test matrix, Table I |
-| Tanishka K | Linux tc/qdisc — HTB queue setup and tuning |
-| Yazhene S | SDN/OpenFlow — controller app, integration bridge |
-| Yamica V | Traffic classification — classifier, dashboard |
-
-All development and testing has been done on a single shared PC running
-**WSL2 Ubuntu**, using Mininet for network emulation.
-
----
-
 ## Anchor Literature
 
 Every algorithmic/design claim in this project traces to one of these four
