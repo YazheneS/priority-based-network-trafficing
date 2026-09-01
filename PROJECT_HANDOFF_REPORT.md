@@ -77,7 +77,9 @@ realistic conditions, with real measurements* — that's what's left.
 ## 3. What's Already Confirmed Working (don't redo this)
 
 All four pieces have been run live, with real generated traffic, and
-individually verified:
+individually verified. **Stage 3 (the controller/integration layer) is
+complete, including a real bug fix — see Issue 3 below — and does not need
+further work in the phases below.**
 
 - **The network/queues (Stage 1):** confirmed the 3 bandwidth lanes exist
   and carry traffic correctly, with zero packet drops observed.
@@ -85,11 +87,12 @@ individually verified:
   (video-like UDP) traffic apart from bulk (large TCP transfer) traffic,
   using real captured network samples — *but only these two categories, see
   Section 4*.
-- **The controller (Stage 3):** confirmed it automatically installs the
-  right traffic-shaping rule when the classifier tells it to, without
-  anyone manually typing commands. **A real bug was found and fixed here**
-  (see Section 4) — if you're pulling the latest code, you already have the
-  fix.
+- **The controller (Stage 3) — DONE:** confirmed it automatically installs
+  the right traffic-shaping rule when the classifier tells it to, without
+  anyone manually typing commands. A real bug was found and fixed here
+  (dynamic rules were being silently ignored due to a priority-number
+  conflict — see Issue 3). This stage is complete; if you're pulling the
+  latest code, the fix is already in place.
 - **The dashboard (Stage 4):** confirmed it shows live data and that its
   on/off switch genuinely controls the system, not just the display.
 
@@ -116,16 +119,17 @@ automatically before every trial** — but if you're ever testing manually,
 clear it yourself first (command's in the root README's troubleshooting
 table).
 
-### Issue 3 — A real bug was found and fixed: dynamic rules were being ignored
+### Issue 3 — RESOLVED: dynamic rules were being silently ignored
 The system uses a priority number to decide which traffic rule "wins" when
 more than one could apply. The rule the classifier installs used to have a
 *lower* priority number than a leftover default rule covering the same
 traffic — meaning the classifier's decision was being silently ignored for
-some traffic, even though it looked like it was working. **This is fixed as
-of the latest code** (`controller/priority_controller.py`) — just be aware
-this happened, because some earlier test results (before the fix) may have
+some traffic, even though it looked like it was working. **This is fixed
+and confirmed working in the latest code**
+(`controller/priority_controller.py`) — no further action needed. Just be
+aware this happened, because any test results from before the fix may have
 actually been measuring the wrong thing, not genuine classifier-driven
-behavior.
+behavior — don't reuse pre-fix numbers in the report.
 
 ### Issue 4 — The original project report file is missing
 The formal write-up (`main.tex`, a LaTeX document) isn't in this repository.
@@ -165,55 +169,58 @@ before running anything for the first time.
 
 ---
 
-## 6. Remaining Work — 3 Phases, One Owner Per Task
+## 6. Remaining Work — 3 Phases, Split Across 3 People
 
-The remaining work is organized into three phases. **Do not skip ahead** —
-each phase depends on the one before it being genuinely done, not just
-attempted. Lane assignments below follow each person's existing area, so
-you're working on what you already know:
+The controller/integration layer (Stage 3) is done and needs no further
+work — its owner has finished their part. The remaining work below is
+split across the other three team members. Use **Person A / Person B /
+Person C** as placeholders — assign these to whichever three of you are
+picking up the remaining testing, in whatever order makes sense for your
+schedules.
 
-| Person | Area |
+| Role | Area |
 |---|---|
-| 1| Measurement — running experiments, recording results |
-| 2 | Network/queues — the bandwidth-lane configuration |
-| 3 | Controller/integration — the decision-making logic |
-| 4 | Classifier/dashboard — the "intelligence" and the UI |
+| **Person A** | Measurement — running experiments, recording results |
+| **Person B** | Network & Integration Verification — bandwidth-lane configuration, confirming the controller fix holds up live, final report merge |
+| **Person C** | Classifier & Dashboard — retraining the classifier, dashboard verification |
+
+**Do not skip ahead between phases.** Each phase depends on the one before
+it being genuinely done, not just attempted.
 
 ---
 
 ### Phase 1 — Fix the two remaining correctness gaps
 
 **Goal:** by the end of this phase, the classifier recognizes all 3
-categories, and everyone has confirmed the priority-fix from Issue 3
-actually works live. Nothing in Phase 2 should be trusted until Phase 1 is
-done.
+categories, and someone has independently confirmed the already-fixed
+priority bug (Issue 3) actually holds up live. Nothing in Phase 2 should be
+trusted until Phase 1 is done.
 
--  Capture real besteffort-style traffic (moderate, irregular —
-  e.g. repeated small web requests, not a steady video-like stream), label
-  it, add it to `classifier/test_data/real_flows.csv`, and retrain the
-  model. Confirm all three tiers are now actually reachable — test each one
-  individually and check the predicted label matches what you sent.
--  Independently verify the queue configuration is exactly
+- **Person C:** Capture real besteffort-style traffic (moderate, irregular
+  — e.g. repeated small web requests, not a steady video-like stream),
+  label it, add it to `classifier/test_data/real_flows.csv`, and retrain
+  the model. Confirm all three tiers are now actually reachable — test each
+  one individually and check the predicted label matches what you sent.
+- **Person B:** Independently verify the queue configuration is exactly
   what the report will claim: run the queue-inspection commands (see root
   README, "How to Run" section) and confirm the three lanes have the right
   guaranteed-minimum and borrowable-maximum values. Confirm you understand
   *why* they're set up this way (guaranteed floor, not a hard cap — see
   root README's "Architecture" section) so you can explain it if asked.
--  With the latest code pulled, run one live test with the
-  classifier and controller both running, and confirm via the
-  flow-inspection command that a classifier-driven rule now actually wins
-  over the leftover default rule (this is the Issue 3 fix — confirm it
-  really works, don't just trust the code change).
--  Do a first small-scale run of the automated test script
+  Also run one live test confirming the already-fixed priority bug (Issue
+  3) genuinely holds: with the classifier and controller both running,
+  check via the flow-inspection command that a classifier-driven rule
+  actually wins over the leftover default rule. This is a confirmation
+  step, not new development — the fix is already in the code.
+- **Person A:** Do a first small-scale run of the automated test script
   (`automation/run_all.sh 1 5` — 1 trial, 5 seconds, quick smoke test, not
   the real experiment yet) purely to catch any environment-specific errors
   before the team commits time to the real experiment in Phase 2. Report
   back anything that breaks.
 
 **Phase 1 is done when:** the classifier correctly identifies all three
-traffic types on demand, the priority fix is confirmed live (not just
-"the code looks right"), and the automated script runs start-to-finish
-without errors at least once.
+traffic types on demand, the priority fix is reconfirmed live, and the
+automated script runs start-to-finish without errors at least once.
 
 ---
 
@@ -221,26 +228,24 @@ without errors at least once.
 
 **Goal:** produce the actual measured numbers the final report needs.
 
--  Run the full automated experiment
+- **Person A:** Run the full automated experiment
   (`automation/run_all.sh 3 15` or more trials if time allows) — this
   generates all three traffic types competing simultaneously, with the
   prioritization system both off and on, and records throughput/jitter/loss
   for each. This produces `results/table1_summary.csv` — this file *is*
   Table I for the report.
--  While experiment runs, review the saved
+- **Person B:** While Person A's experiment runs, review the saved
   queue/flow snapshots it produces (`results/ovs_snapshots/`) and confirm
   they match what you'd expect given the queue configuration from Phase 1.
   Flag anything that looks inconsistent.
--  Separately, capture a handful of fresh traffic samples (not
+- **Person C:** Separately, capture a handful of fresh traffic samples (not
   used in training) and run `automation/eval_classifier.py` against them to
   get real accuracy/precision/recall/F1 numbers and a confusion matrix for
-  the report.
--  During experiment run, keep the dashboard open and
-  confirm it's genuinely showing live data as the experiment happens (not
-  just a static page), and that toggling prioritization on/off from the
-  dashboard visibly changes the measured numbers you're watching. This is
-  the final confirmation that the dashboard reflects the real system, not
-  just a demo.
+  the report. Also, during Person A's experiment run, keep the dashboard
+  open and confirm it's genuinely showing live data as the experiment
+  happens (not just a static page), and that toggling prioritization
+  on/off from the dashboard visibly changes the measured numbers you're
+  watching.
 
 **Phase 2 is done when:** you have a results CSV with real before/after
 numbers for all three traffic tiers, classifier accuracy numbers with a
@@ -254,24 +259,24 @@ live system.
 **Goal:** everything measured in Phase 2 makes it into the actual written
 report, cited correctly, ready to submit.
 
--  Turn the Table I numbers into the report's results table
+- **Person A:** Turn the Table I numbers into the report's results table
   (and a chart/graph if the report format calls for one) — the actual
   before/after comparison that proves the prioritization system helps.
--  Write up the classifier results section — the accuracy
+- **Person C:** Write up the classifier results section — the accuracy
   numbers, and briefly, the debugging story of how the model was improved
   (it originally relied on the wrong signal and misclassified bulk traffic;
   switching to packet-size variance fixed it — this is worth a paragraph,
   it shows real engineering work, not just "we trained a model and it
   worked").
-- Write up the queue-configuration section — what the three
+- **Person B:** Write up the queue-configuration section — what the three
   lanes are, their guaranteed/borrowable values, and reference the
   Shahriar et al. paper for why it's designed this way (guaranteed floor,
-  not hard caps).
--  Locate the original report file (Issue 4) and merge
-  everyone's sections into it. Do a final pass checking every technical
-  claim traces back to one of the four anchor papers. Coordinate one final
-  live demo run of the whole system, start to finish, before submission —
-  this is the actual proof-of-concept moment, make sure it goes smoothly.
+  not hard caps). Also locate the original report file (Issue 4), merge
+  everyone's sections into it, and do a final pass checking every technical
+  claim traces back to one of the four anchor papers.
+- **Everyone:** Coordinate one final live demo run of the whole system,
+  start to finish, before submission — this is the actual proof-of-concept
+  moment, make sure it goes smoothly with everyone present.
 
 **Phase 3 is done when:** the report contains real measured results (not
 placeholders), every section has an owner who actually wrote it, citations
@@ -283,10 +288,9 @@ are checked, and the team has done one clean final demo run together.
 
 | Question about... | Ask |
 |---|---|
-| Network topology, bandwidth queues, HTB configuration |  |
-| Controller behavior, OpenFlow rules, the integration bridge |  |
-| Classifier accuracy, model training, dashboard |  |
-| Test results, measurements, Table I |  |
+| Network topology, bandwidth queues, HTB configuration, confirming the controller fix | Person B |
+| Classifier accuracy, model training, dashboard | Person C |
+| Test results, measurements, Table I | Person A |
 | "How do I even run this thing" | Root `README.md` first, then whoever's around |
 
 ---
