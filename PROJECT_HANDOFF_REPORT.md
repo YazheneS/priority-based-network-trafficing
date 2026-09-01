@@ -227,7 +227,7 @@ without errors at least once.
   prioritization system both off and on, and records throughput/jitter/loss
   for each. This produces `results/table1_summary.csv` — this file *is*
   Table I for the report.
--  While Monica's experiment runs, review the saved
+-  While experiment runs, review the saved
   queue/flow snapshots it produces (`results/ovs_snapshots/`) and confirm
   they match what you'd expect given the queue configuration from Phase 1.
   Flag anything that looks inconsistent.
@@ -235,7 +235,7 @@ without errors at least once.
   used in training) and run `automation/eval_classifier.py` against them to
   get real accuracy/precision/recall/F1 numbers and a confusion matrix for
   the report.
--  During Monica's experiment run, keep the dashboard open and
+-  During experiment run, keep the dashboard open and
   confirm it's genuinely showing live data as the experiment happens (not
   just a static page), and that toggling prioritization on/off from the
   dashboard visibly changes the measured numbers you're watching. This is
