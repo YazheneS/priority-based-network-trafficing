@@ -240,7 +240,12 @@ class PriorityController(app_manager.OSKenApp):
             match_kwargs["udp_dst"] = dst_port
 
         match = parser.OFPMatch(**match_kwargs)
-        self.install_priority_flow(datapath, match, tier)
+        # priority=25 deliberately beats the static demo rules (priority=20)
+        # installed by _install_demo_static_rules(). Without this, dynamic
+        # classifier-driven rules for the same ports the demo rules cover
+        # (UDP 5000, TCP 5201) are silently shadowed and never actually
+        # match traffic, even though they show up in `dump-flows`.
+        self.install_priority_flow(datapath, match, tier, priority=25)
         return True, "ok"
 
     # ------------------------------------------------------------------ #

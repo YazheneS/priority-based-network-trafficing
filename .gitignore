@@ -44,3 +44,4 @@ build/
 # Runtime-generated dashboard data
 dashboard/backend/metrics_store.json
 dashboard/backend/metrics_store_backup_before_task5.json
+results/
