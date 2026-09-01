@@ -576,15 +576,3 @@ python3 automation/eval_classifier.py \
 ```
 
 ---
-
-## Lane Ownership
-
-| Lane | Owner | Files |
-|---|---|---|
-| QoS measurement | Monica | Test matrices, Table I |
-| Linux tc/qdisc | Tanishka | `topology/setup_queues.sh` |
-| SDN/OpenFlow | Yazhene | `controller/priority_controller.py`, `integration/bridge.py` |
-| Traffic classification | Yamica | `classifier/traffic_classifier.py`, `dashboard/` |
-
-*(Not yet formally confirmed with the full team — adjust if lanes differ
-from this proposal.)*
