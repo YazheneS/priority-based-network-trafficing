@@ -20,7 +20,8 @@ CS23502 — Networks and Data Communication | 12-Week Mini-Project
 10. [Known Issues / Open Items](#known-issues--open-items)
 11. [Remaining Work](#remaining-work)
 12. [Troubleshooting Log](#troubleshooting-log)
-13. [Lane Ownership](#lane-ownership)
+13. [Automated Testing (Table I Generation)](#automated-testing-table-i-generation)
+14. [Lane Ownership](#lane-ownership)
 
 ---
 
@@ -530,6 +531,63 @@ thing twice.
 | Classifier misclassifies real TCP traffic as `realtime` | Original model trained on only 4 synthetic samples, learned an unreliable `std_iat` threshold that real TCP flows happened to fall under | Disable NIC offloading (TSO/GSO/GRO), collect real labelled samples, retrain on `std_size` instead — see `model.real.joblib` |
 | `/status` shows a different queue than what OVS actually installed | Stale manual `ovs-ofctl` rules left over from earlier hand-typed tests | `sudo ovs-ofctl -O OpenFlow13 del-flows s1` and restart the controller before each clean test |
 | `listener bind failed: Address already in use` on `iperf3 -s` | An old `iperf3` server process from a previous test is still running | `pkill -9 iperf3` (or `iperf`) and confirm with `ps aux \| grep iperf` before starting a new server |
+
+---
+
+---
+
+## Automated Testing (Table I Generation)
+
+Manually running iperf3 in the `mininet>` CLI for every trial is slow and
+error-prone. `automation/` contains a semi-automated harness that owns
+Mininet, cleans stale flows, generates all three traffic tiers
+concurrently, toggles the engine ON/OFF, repeats for N trials, and writes
+results straight to CSV.
+
+**What's automated:** topology + queue setup, flow-table cleanup between
+trials, engine toggling, concurrent multi-tier traffic generation, iperf3
+JSON result parsing, OVS flow/queue snapshotting, CSV output, and
+before/after averaging. It also bootstraps a trained model automatically
+from `classifier/test_data/real_flows.csv` if none exists yet — model
+files are gitignored, so a fresh clone never has one committed.
+
+**What's still manual (can't be automated away):** starting the os-ken
+controller and the integration bridge in their own terminals first — the
+controller is a separate long-running process, and the bridge needs
+interfaces that only exist once the experiment's own Mininet topology is
+already up.
+
+```bash
+# Terminal 1 (leave running):
+source .venv/bin/activate
+osken-manager controller/priority_controller.py
+
+# Terminal 2 — run the automated harness:
+bash automation/run_all.sh 3 15   # 3 trials per engine state, 15s each
+```
+The script pauses once interfaces exist so you can start the bridge in a
+third terminal if you want live classifier decisions during the run:
+```bash
+sudo /home/<user>/priority-based-network-trafficing/.venv/bin/python3 \
+  /home/<user>/priority-based-network-trafficing/integration/bridge.py \
+  --iface s1-eth1,s1-eth2,s1-eth3 --dpid 1 \
+  --model classifier/test_data/model.real.joblib
+```
+
+Results land in `results/table1_results.csv` (raw, per-trial) and
+`results/table1_summary.csv` (averaged — this is what goes in the report).
+OVS flow/queue snapshots per trial are saved under `results/ovs_snapshots/`
+for debugging or as report appendix material. `results/` is gitignored —
+don't force-add generated output into the repo.
+
+**Classifier evaluation** (accuracy/precision/recall/F1/confusion matrix,
+on held-out data — do not reuse the training CSV):
+```bash
+source .venv/bin/activate
+python3 automation/eval_classifier.py \
+  --model classifier/test_data/model.real.joblib \
+  --test-data classifier/test_data/holdout_flows.csv   # capture this separately
+```
 
 ---
 
