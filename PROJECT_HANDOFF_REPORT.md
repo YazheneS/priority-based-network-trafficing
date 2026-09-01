@@ -174,10 +174,10 @@ you're working on what you already know:
 
 | Person | Area |
 |---|---|
-| **Monica** | Measurement — running experiments, recording results |
-| **Tanishka** | Network/queues — the bandwidth-lane configuration |
-| **Yazhene** | Controller/integration — the decision-making logic |
-| **Yamica** | Classifier/dashboard — the "intelligence" and the UI |
+| 1| Measurement — running experiments, recording results |
+| 2 | Network/queues — the bandwidth-lane configuration |
+| 3 | Controller/integration — the decision-making logic |
+| 4 | Classifier/dashboard — the "intelligence" and the UI |
 
 ---
 
@@ -188,23 +188,23 @@ categories, and everyone has confirmed the priority-fix from Issue 3
 actually works live. Nothing in Phase 2 should be trusted until Phase 1 is
 done.
 
-- **Yamica:** Capture real besteffort-style traffic (moderate, irregular —
+-  Capture real besteffort-style traffic (moderate, irregular —
   e.g. repeated small web requests, not a steady video-like stream), label
   it, add it to `classifier/test_data/real_flows.csv`, and retrain the
   model. Confirm all three tiers are now actually reachable — test each one
   individually and check the predicted label matches what you sent.
-- **Tanishka:** Independently verify the queue configuration is exactly
+-  Independently verify the queue configuration is exactly
   what the report will claim: run the queue-inspection commands (see root
   README, "How to Run" section) and confirm the three lanes have the right
   guaranteed-minimum and borrowable-maximum values. Confirm you understand
   *why* they're set up this way (guaranteed floor, not a hard cap — see
   root README's "Architecture" section) so you can explain it if asked.
-- **Yazhene:** With the latest code pulled, run one live test with the
+-  With the latest code pulled, run one live test with the
   classifier and controller both running, and confirm via the
   flow-inspection command that a classifier-driven rule now actually wins
   over the leftover default rule (this is the Issue 3 fix — confirm it
   really works, don't just trust the code change).
-- **Monica:** Do a first small-scale run of the automated test script
+-  Do a first small-scale run of the automated test script
   (`automation/run_all.sh 1 5` — 1 trial, 5 seconds, quick smoke test, not
   the real experiment yet) purely to catch any environment-specific errors
   before the team commits time to the real experiment in Phase 2. Report
@@ -221,21 +221,21 @@ without errors at least once.
 
 **Goal:** produce the actual measured numbers the final report needs.
 
-- **Monica:** Run the full automated experiment
+-  Run the full automated experiment
   (`automation/run_all.sh 3 15` or more trials if time allows) — this
   generates all three traffic types competing simultaneously, with the
   prioritization system both off and on, and records throughput/jitter/loss
   for each. This produces `results/table1_summary.csv` — this file *is*
   Table I for the report.
-- **Tanishka:** While Monica's experiment runs, review the saved
+-  While Monica's experiment runs, review the saved
   queue/flow snapshots it produces (`results/ovs_snapshots/`) and confirm
   they match what you'd expect given the queue configuration from Phase 1.
   Flag anything that looks inconsistent.
-- **Yamica:** Separately, capture a handful of fresh traffic samples (not
+-  Separately, capture a handful of fresh traffic samples (not
   used in training) and run `automation/eval_classifier.py` against them to
   get real accuracy/precision/recall/F1 numbers and a confusion matrix for
   the report.
-- **Yazhene:** During Monica's experiment run, keep the dashboard open and
+-  During Monica's experiment run, keep the dashboard open and
   confirm it's genuinely showing live data as the experiment happens (not
   just a static page), and that toggling prioritization on/off from the
   dashboard visibly changes the measured numbers you're watching. This is
@@ -254,20 +254,20 @@ live system.
 **Goal:** everything measured in Phase 2 makes it into the actual written
 report, cited correctly, ready to submit.
 
-- **Monica:** Turn the Table I numbers into the report's results table
+-  Turn the Table I numbers into the report's results table
   (and a chart/graph if the report format calls for one) — the actual
   before/after comparison that proves the prioritization system helps.
-- **Yamica:** Write up the classifier results section — the accuracy
+-  Write up the classifier results section — the accuracy
   numbers, and briefly, the debugging story of how the model was improved
   (it originally relied on the wrong signal and misclassified bulk traffic;
   switching to packet-size variance fixed it — this is worth a paragraph,
   it shows real engineering work, not just "we trained a model and it
   worked").
-- **Tanishka:** Write up the queue-configuration section — what the three
+- Write up the queue-configuration section — what the three
   lanes are, their guaranteed/borrowable values, and reference the
   Shahriar et al. paper for why it's designed this way (guaranteed floor,
   not hard caps).
-- **Yazhene:** Locate the original report file (Issue 4) and merge
+-  Locate the original report file (Issue 4) and merge
   everyone's sections into it. Do a final pass checking every technical
   claim traces back to one of the four anchor papers. Coordinate one final
   live demo run of the whole system, start to finish, before submission —
@@ -283,10 +283,10 @@ are checked, and the team has done one clean final demo run together.
 
 | Question about... | Ask |
 |---|---|
-| Network topology, bandwidth queues, HTB configuration | Tanishka |
-| Controller behavior, OpenFlow rules, the integration bridge | Yazhene |
-| Classifier accuracy, model training, dashboard | Yamica |
-| Test results, measurements, Table I | Monica |
+| Network topology, bandwidth queues, HTB configuration |  |
+| Controller behavior, OpenFlow rules, the integration bridge |  |
+| Classifier accuracy, model training, dashboard |  |
+| Test results, measurements, Table I |  |
 | "How do I even run this thing" | Root `README.md` first, then whoever's around |
 
 ---
