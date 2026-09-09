@@ -30,6 +30,7 @@ The queue configuration was verified using:
 sudo ovs-vsctl list qos
 sudo ovs-vsctl list queue
 
+<img width="942" height="210" alt="Screenshot 2026-09-09 153202" src="https://github.com/user-attachments/assets/fd012cd2-be86-4072-8a34-3a1ca44e3a8e" />
 
 
 Bandwidth Interpretation
@@ -48,6 +49,8 @@ Q2 is guaranteed at least 1 Mbps and can borrow bandwidth up to 10 Mbps.
 The ceiling is therefore not treated as a hard fixed bandwidth allocation.
 Unused bandwidth can be utilized by other queues according to the configured
 QoS behaviour.
+<img width="1007" height="355" alt="Screenshot 2026-09-09 153226" src="https://github.com/user-attachments/assets/05800072-ed1e-4ceb-ad13-b40e01bc0b73" />
+
 
 2. Issue 3 — OpenFlow Priority Verification
 
@@ -75,6 +78,9 @@ default catch-all rule.
 Therefore, when a packet matches a classifier-specific rule, that rule is
 selected instead of the lower-priority default rule.
 
+<img width="1242" height="205" alt="Screenshot 2026-09-09 153711" src="https://github.com/user-attachments/assets/8e96d3a6-b87a-446e-a58e-36ab186c309d" />
+
+
 3. Live Verification
 
 The OpenFlow table and queue behaviour were inspected during live traffic
@@ -87,6 +93,7 @@ Specific OpenFlow rules take precedence over the default catch-all rule.
 Queue assignment corresponds to the configured traffic class.
 The OpenFlow packet and byte counters can be used to confirm that the
 expected rules are receiving traffic.
+
 4. Phase 1 Verification Result
 
 The Phase 1 verification assigned to Person B has been completed.
@@ -101,6 +108,7 @@ Checklist
  Classifier-driven rule confirmed to take precedence over the
 default catch-all rule
  Live OpenFlow behaviour inspected
+
 Conclusion
 
 The OVS queue configuration and OpenFlow priority behaviour are consistent
