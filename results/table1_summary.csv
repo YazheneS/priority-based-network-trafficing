@@ -1,0 +1,7 @@
+engine_state,tier,throughput_mean_mbps,throughput_std_mbps,jitter_mean_ms,loss_mean_pct,n_trials
+engine_off,besteffort,5.461,1.248,,,3
+engine_off,bulk,1.391,1.576,,,3
+engine_off,realtime,2.678,0.455,5.1101,0.0,3
+engine_on,besteffort,5.592,0.008,,,3
+engine_on,bulk,0.959,0.004,,,3
+engine_on,realtime,3.0,0.0,0.8355,0.0,3
