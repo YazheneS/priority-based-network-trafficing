@@ -131,12 +131,17 @@ aware this happened, because any test results from before the fix may have
 actually been measuring the wrong thing, not genuine classifier-driven
 behavior — don't reuse pre-fix numbers in the report.
 
-### Issue 4 — The original project report file is missing
-The formal write-up (`main.tex`, a LaTeX document) isn't in this repository.
-Someone has it somewhere (Overleaf history, a downloaded zip, a laptop). Do
-**not** write a new one from scratch — find the original. A regenerated one
-risks losing the careful citation discipline the team has maintained (every
-technical claim traced to one of the four anchor papers).
+### Issue 4 — RESOLVED: main.tex was never created in the first place
+**Update:** confirmed via a full search of every commit on every branch —
+`main.tex` was never created. It's not lost, it never existed as a separate
+file. There is no original to go find.
+
+The report should be assembled starting from `docs/implementation_section.tex`,
+which already exists and already follows the team's citation discipline
+(every technical claim traced to one of the four anchor papers via its
+`deo2024`-style citation-key comments). Build the rest of the report around
+that section rather than treating it as a fragment waiting to be slotted
+into a missing `main.tex`.
 
 ### Issue 5 — Frontend has flagged dependency warnings
 `npm install` in the dashboard frontend reports a number of vulnerabilities
@@ -271,9 +276,11 @@ report, cited correctly, ready to submit.
 - **Person B:** Write up the queue-configuration section — what the three
   lanes are, their guaranteed/borrowable values, and reference the
   Shahriar et al. paper for why it's designed this way (guaranteed floor,
-  not hard caps). Also locate the original report file (Issue 4), merge
-  everyone's sections into it, and do a final pass checking every technical
-  claim traces back to one of the four anchor papers.
+  not hard caps). Also assemble the full report starting from
+  `docs/implementation_section.tex` (see Issue 4 — there is no separate
+  `main.tex` to locate), merge everyone's sections into it, and do a final
+  pass checking every technical claim traces back to one of the four
+  anchor papers.
 - **Everyone:** Coordinate one final live demo run of the whole system,
   start to finish, before submission — this is the actual proof-of-concept
   moment, make sure it goes smoothly with everyone present.
