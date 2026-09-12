@@ -109,37 +109,51 @@ selected instead of the lower-priority best-effort or fallback rules.
 
 ## 3. Live Verification
 
-**Status: rule priorities confirmed via table structure; live counter
-confirmation still outstanding.**
+**Status: rule priorities confirmed via table structure, and now
+independently confirmed live with non-zero traffic counters.**
 
-The screenshot above was captured shortly after controller startup
-(`duration=14.221s` on every rule) with `n_packets=0, n_bytes=0` across the
-board - it proves the rule *priorities and match conditions* are configured
-as intended, but it does not yet demonstrate that live traffic actually
-took the higher-priority path over a lower-priority one, since no traffic
-had flowed through any rule at capture time.
+The first `dump-flows` capture (Section 2) was taken shortly after
+controller startup (`duration=14.221s` on every rule) with
+`n_packets=0, n_bytes=0` across the board - it proved the rule *priorities
+and match conditions* were configured as intended, but not that live
+traffic actually took the higher-priority path over a lower-priority one.
 
-**Still needed to close this out:** re-run
-`sudo ovs-ofctl -O OpenFlow13 dump-flows s1` while traffic is actively
-flowing (ideally during Person A's Table I experiment run), and capture a
-screenshot showing non-zero `n_packets`/`n_bytes` specifically on the
-`udp,tp_dst=5000` and `tcp,tp_dst=5201` rules. That's what turns "rules are
-configured correctly" into "the correct rule was actually selected for
-real traffic" - worth having ready in case it comes up in review.
+`dump-flows` was re-run while traffic was actively flowing (during a
+`run_all.sh` experiment run), rather than on an idle switch, so that the
+per-rule packet/byte counters would reflect real traffic hitting each rule:
 
-Confirmed so far:
+```bash
+sudo ovs-ofctl -O OpenFlow13 dump-flows s1
+```
+
+### Live traffic counter verification
+
+The `dump-flows` output below was captured while `run_all.sh` was actively
+generating traffic. The `n_packets` and `n_bytes` fields are non-zero on
+both classifier-driven rules, confirming that live traffic is actually
+being matched by them - not just that the rules exist.
+
+**Screenshot 1 — `udp,tp_dst=5000` rule with non-zero n_packets / n_bytes**
+
+<img width="1107" height="908" alt="Screenshot 2026-09-12 232500" src="https://github.com/user-attachments/assets/075f8d0f-f622-4737-b54c-825316a99cfb" />
+
+**Screenshot 2 — `tcp,tp_dst=5201` rule with non-zero n_packets / n_bytes**
+
+<img width="998" height="931" alt="Screenshot 2026-09-12 232634" src="https://github.com/user-attachments/assets/3886b227-e547-4261-82b1-2c2f8ba7a405" />
+
+Confirmed:
 
 - [x] Classifier-driven traffic is mapped to the intended queue (via rule structure)
 - [x] Specific OpenFlow rules are assigned higher priority than the best-effort and fallback rules
 - [x] Queue assignment corresponds to the configured traffic class
-- [ ] Live packet/byte counters confirmed non-zero on the correct rules during real traffic
+- [x] Live packet/byte counters confirmed non-zero on the correct rules during real traffic
 
 ---
 
 ## 4. Phase 1 Verification Result
 
-The queue-configuration and rule-priority portions of Phase 1 verification
-are complete. One live-traffic confirmation step (Section 3) remains open.
+Phase 1 verification for Person B is complete: queue configuration, rule
+priorities, and live-traffic counter confirmation have all been verified.
 
 ### Checklist
 
@@ -149,13 +163,12 @@ are complete. One live-traffic confirmation step (Section 3) remains open.
 - [x] Q2 guaranteed rate and ceiling verified
 - [x] Difference between guaranteed rate and ceiling verified
 - [x] Issue 3 OpenFlow priority ordering verified (rule table structure)
-- [ ] Live OpenFlow packet/byte counters confirmed non-zero on the correct
+- [x] Live OpenFlow packet/byte counters confirmed non-zero on the correct
       rule during real traffic
 
 ### Conclusion
 
 The OVS queue configuration and OpenFlow rule priorities are consistent
-with the intended priority-based traffic management design. The remaining
-step is a live-traffic counter check to confirm the configured priorities
-are actually exercised as expected under real load, rather than only
-verified as correctly configured.
+with the intended priority-based traffic management design, and this has
+been confirmed both structurally (rule table inspection) and live (non-zero
+traffic counters on the correct rules during an active experiment run).
