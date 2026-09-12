@@ -28,9 +28,13 @@ The queue configuration was verified using:
 sudo ovs-vsctl list qos
 sudo ovs-vsctl list queue
 ```
-![alt text](<Screenshot 2026-09-09 153202.png>)
 
-![alt text](<Screenshot 2026-09-09 153226.png>)
+<img width="942" height="210" alt="Screenshot 2026-09-09 153202" src="https://github.com/user-attachments/assets/aa855328-19d9-4413-9929-bec68c3f8e70" />
+
+
+
+<img width="1007" height="355" alt="Screenshot 2026-09-09 153226" src="https://github.com/user-attachments/assets/722640cf-49c0-4355-9cb9-068998996afb" />
+
 
 
 ### Bandwidth Interpretation
@@ -73,7 +77,8 @@ The classifier-specific rules are assigned a higher OpenFlow priority than the d
 
 Therefore, when a packet matches a classifier-specific rule, that rule is selected instead of the lower-priority default rule.
 
-![alt text](<Screenshot 2026-09-12 231005.png>)
+<img width="1371" height="236" alt="Screenshot 2026-09-12 231005" src="https://github.com/user-attachments/assets/d409832f-cee6-4e13-b87d-9c17a0ca6e63" />
+
 ---
 
 ## 3. Live Verification
@@ -98,11 +103,12 @@ The verification confirmed that:
 The `dump-flows` output below was captured while `run_all.sh` was actively generating traffic. The `n_packets` and `n_bytes` fields are non-zero on both classifier-driven rules, confirming that live traffic is actually being matched by them (not just that the rules exist).
 
 **Screenshot 1 — `udp,tp_dst=5000` rule with non-zero n_packets / n_bytes**
-![alt text](<Screenshot 2026-09-12 232500-1.png>)
+
+<img width="1107" height="908" alt="Screenshot 2026-09-12 232500" src="https://github.com/user-attachments/assets/075f8d0f-f622-4737-b54c-825316a99cfb" />
 
 **Screenshot 2 — `tcp,tp_dst=5201` rule with non-zero n_packets / n_bytes**
 
-![alt text](<Screenshot 2026-09-12 232634.png>)
+<img width="998" height="931" alt="Screenshot 2026-09-12 232634" src="https://github.com/user-attachments/assets/3886b227-e547-4261-82b1-2c2f8ba7a405" />
 
 ---
 
