@@ -84,12 +84,24 @@ def compute_features(sizes, timestamps):
     # greater packet-size variation/burstiness.
     burstiness = (std_size / mean_size) if mean_size > 0 else 0.0
 
+    # Achieved byte rate across the window (bytes/sec). Added because
+    # mean_size/std_size/burstiness alone can't separate a rate-limited
+    # steady stream (realtime, capped at -b 3M) from an uncapped steady
+    # stream (bulk) on an idle link - both can end up with near-identical
+    # per-packet size and timing statistics even though their actual
+    # achieved throughput differs substantially. This stays a behavioral
+    # signal (observed achieved rate), not a static header/port lookup.
+    window_duration = timestamps[-1] - timestamps[0]
+    total_bytes = sum(sizes)
+    byte_rate = (total_bytes / window_duration) if window_duration > 0 else 0.0
+
     return {
         "mean_size": mean_size,
         "std_size": std_size,
         "mean_iat": mean_iat,
         "std_iat": std_iat,
         "burstiness": burstiness,
+        "byte_rate": byte_rate,
         # jitter proxy, directly comparable to the Week 4 baseline UDP jitter figure
         "jitter_estimate_ms": std_iat * 1000.0,
     }
@@ -105,7 +117,7 @@ class BehavioralClassifier:
     e.g. for a quick classroom demo) so the pipeline never silently breaks.
     """
 
-    FEATURE_ORDER = ["mean_size", "std_size", "mean_iat", "std_iat", "burstiness"]
+    FEATURE_ORDER = ["mean_size", "std_size", "mean_iat", "std_iat", "burstiness", "byte_rate"]
 
     def __init__(self, model_path=None):
         self.model = None
@@ -142,6 +154,11 @@ class BehavioralClassifier:
         for interactive vs. bulk flows discussed in Serag et al. (2025);
         should be re-tuned against your own captured samples before Week 9
         results are finalised.
+
+        NOTE: this fallback does not yet use byte_rate (added to
+        FEATURE_ORDER for the trained-model path). It's the demo/no-model
+        fallback only, not the primary path - low priority to update, but
+        flagging so it isn't mistaken for using the same feature set.
         """
         mean_size = features["mean_size"]
         burstiness = features["burstiness"]
