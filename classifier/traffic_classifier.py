@@ -219,13 +219,18 @@ def classify_stream(iface, clf: BehavioralClassifier, on_classified=None):
         if proto is None:
             return
 
-        # Ignore pure TCP ACK packets. They are transport-control traffic,
-        # not application payload, and would otherwise appear as a separate
-        # 5-tuple flow with tiny (~66 B) packets and be misclassified as
-        # realtime.
+        # Ignore pure TCP control packets carrying no application payload
+        # (bare ACKs, ACKs with ECN bits set, SYN/FIN/RST control frames,
+        # etc.). They are transport-control traffic, not application
+        # payload, and would otherwise form their own tiny-packet (~54 B)
+        # flow windows - e.g. the reverse ACK stream of a one-way bulk
+        # transfer - and get misclassified. Filtering on payload length
+        # alone (rather than an exact tcp.flags == "A" string match) also
+        # catches ACKs with extra bits set (e.g. ECN echo -> flags "AE"),
+        # which the previous exact-match filter let through.
         if TCP in pkt:
             tcp = pkt[TCP]
-            if len(tcp.payload) == 0 and tcp.flags == "A":
+            if len(tcp.payload) == 0:
                 return
 
         sport = pkt[TCP].sport if TCP in pkt else pkt[UDP].sport
@@ -236,7 +241,15 @@ def classify_stream(iface, clf: BehavioralClassifier, on_classified=None):
 
         w = windows[key]
         w["sizes"].append(len(pkt))
-        w["times"].append(time.time())
+        # Use the packet's actual capture timestamp, not Python's own
+        # processing time. time.time() reflects when this callback
+        # happened to run (subject to GIL/OS scheduling jitter, worse
+        # under load), not when the packet actually arrived - this was
+        # corrupting mean_iat/std_iat/byte_rate for the live path only,
+        # which is why offline extraction (extract_besteffort_features.py,
+        # which already uses pkt.time) and live classification disagreed
+        # on the same underlying traffic.
+        w["times"].append(float(pkt.time))
 
         if len(w["sizes"]) == WINDOW_SIZE:
             feats = compute_features(list(w["sizes"]), list(w["times"]))
