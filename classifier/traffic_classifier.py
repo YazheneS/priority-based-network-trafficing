@@ -84,12 +84,24 @@ def compute_features(sizes, timestamps):
     # greater packet-size variation/burstiness.
     burstiness = (std_size / mean_size) if mean_size > 0 else 0.0
 
+    # Achieved byte rate across the window (bytes/sec). Added because
+    # mean_size/std_size/burstiness alone can't separate a rate-limited
+    # steady stream (realtime, capped at -b 3M) from an uncapped steady
+    # stream (bulk) on an idle link - both can end up with near-identical
+    # per-packet size and timing statistics even though their actual
+    # achieved throughput differs substantially. This stays a behavioral
+    # signal (observed achieved rate), not a static header/port lookup.
+    window_duration = timestamps[-1] - timestamps[0]
+    total_bytes = sum(sizes)
+    byte_rate = (total_bytes / window_duration) if window_duration > 0 else 0.0
+
     return {
         "mean_size": mean_size,
         "std_size": std_size,
         "mean_iat": mean_iat,
         "std_iat": std_iat,
         "burstiness": burstiness,
+        "byte_rate": byte_rate,
         # jitter proxy, directly comparable to the Week 4 baseline UDP jitter figure
         "jitter_estimate_ms": std_iat * 1000.0,
     }
@@ -105,7 +117,7 @@ class BehavioralClassifier:
     e.g. for a quick classroom demo) so the pipeline never silently breaks.
     """
 
-    FEATURE_ORDER = ["mean_size", "std_size", "mean_iat", "std_iat", "burstiness"]
+    FEATURE_ORDER = ["mean_size", "std_size", "mean_iat", "std_iat", "burstiness", "byte_rate"]
 
     def __init__(self, model_path=None):
         self.model = None
@@ -142,6 +154,11 @@ class BehavioralClassifier:
         for interactive vs. bulk flows discussed in Serag et al. (2025);
         should be re-tuned against your own captured samples before Week 9
         results are finalised.
+
+        NOTE: this fallback does not yet use byte_rate (added to
+        FEATURE_ORDER for the trained-model path). It's the demo/no-model
+        fallback only, not the primary path - low priority to update, but
+        flagging so it isn't mistaken for using the same feature set.
         """
         mean_size = features["mean_size"]
         burstiness = features["burstiness"]
@@ -202,13 +219,18 @@ def classify_stream(iface, clf: BehavioralClassifier, on_classified=None):
         if proto is None:
             return
 
-        # Ignore pure TCP ACK packets. They are transport-control traffic,
-        # not application payload, and would otherwise appear as a separate
-        # 5-tuple flow with tiny (~66 B) packets and be misclassified as
-        # realtime.
+        # Ignore pure TCP control packets carrying no application payload
+        # (bare ACKs, ACKs with ECN bits set, SYN/FIN/RST control frames,
+        # etc.). They are transport-control traffic, not application
+        # payload, and would otherwise form their own tiny-packet (~54 B)
+        # flow windows - e.g. the reverse ACK stream of a one-way bulk
+        # transfer - and get misclassified. Filtering on payload length
+        # alone (rather than an exact tcp.flags == "A" string match) also
+        # catches ACKs with extra bits set (e.g. ECN echo -> flags "AE"),
+        # which the previous exact-match filter let through.
         if TCP in pkt:
             tcp = pkt[TCP]
-            if len(tcp.payload) == 0 and tcp.flags == "A":
+            if len(tcp.payload) == 0:
                 return
 
         sport = pkt[TCP].sport if TCP in pkt else pkt[UDP].sport
@@ -219,7 +241,15 @@ def classify_stream(iface, clf: BehavioralClassifier, on_classified=None):
 
         w = windows[key]
         w["sizes"].append(len(pkt))
-        w["times"].append(time.time())
+        # Use the packet's actual capture timestamp, not Python's own
+        # processing time. time.time() reflects when this callback
+        # happened to run (subject to GIL/OS scheduling jitter, worse
+        # under load), not when the packet actually arrived - this was
+        # corrupting mean_iat/std_iat/byte_rate for the live path only,
+        # which is why offline extraction (extract_besteffort_features.py,
+        # which already uses pkt.time) and live classification disagreed
+        # on the same underlying traffic.
+        w["times"].append(float(pkt.time))
 
         if len(w["sizes"]) == WINDOW_SIZE:
             feats = compute_features(list(w["sizes"]), list(w["times"]))
