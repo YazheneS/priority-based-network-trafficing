@@ -196,36 +196,40 @@ it being genuinely done, not just attempted.
 
 ### Phase 1 — Fix the two remaining correctness gaps
 
-**Goal:** by the end of this phase, the classifier recognizes all 3
-categories, and someone has independently confirmed the already-fixed
-priority bug (Issue 3) actually holds up live. Nothing in Phase 2 should be
-trusted until Phase 1 is done.
+> **STATUS: COMPLETE** — closed 2026-09-16. All three checklist items
+> verified independently. Phase 2 is unblocked for all team members.
 
-- **Person C:** Capture real besteffort-style traffic (moderate, irregular
-  — e.g. repeated small web requests, not a steady video-like stream),
-  label it, add it to `classifier/test_data/real_flows.csv`, and retrain
-  the model. Confirm all three tiers are now actually reachable — test each
-  one individually and check the predicted label matches what you sent.
-- **Person B:** Independently verify the queue configuration is exactly
-  what the report will claim: run the queue-inspection commands (see root
-  README, "How to Run" section) and confirm the three lanes have the right
-  guaranteed-minimum and borrowable-maximum values. Confirm you understand
-  *why* they're set up this way (guaranteed floor, not a hard cap — see
-  root README's "Architecture" section) so you can explain it if asked.
-  Also run one live test confirming the already-fixed priority bug (Issue
-  3) genuinely holds: with the classifier and controller both running,
-  check via the flow-inspection command that a classifier-driven rule
-  actually wins over the leftover default rule. This is a confirmation
-  step, not new development — the fix is already in the code.
-- **Person A:** Do a first small-scale run of the automated test script
-  (`automation/run_all.sh 1 5` — 1 trial, 5 seconds, quick smoke test, not
-  the real experiment yet) purely to catch any environment-specific errors
-  before the team commits time to the real experiment in Phase 2. Report
-  back anything that breaks.
+**What was done and verified (do not redo any of this):**
 
-**Phase 1 is done when:** the classifier correctly identifies all three
+- **Person A (Yamica):** Full experiment run completed (`run_all.sh 3 15`),
+  Table I results pushed (`results/table1_results.csv`,
+  `results/table1_summary.csv`), OVS flow/queue snapshots pushed
+  (`results/ovs_snapshots/` — see README there for correct interpretation
+  of cumulative counters). Phase 1 smoke test superseded by the full run.
+
+- **Person B (Tanishka):** Queue configuration verified live — Q0 6/10 Mbps,
+  Q1 2/8 Mbps, Q2 1/10 Mbps (guaranteed/ceiling). Issue 3 fix confirmed
+  with non-zero live traffic counters on the `udp,tp_dst=5000` and
+  `tcp,tp_dst=5201` rules during an active run. Full verification doc:
+  `docs/person_b_phase1/person-b-phase1-verification.md`.
+
+- **Person C (Monica):** Three-class classifier confirmed working.
+  Final dataset: 1,701 samples — 785 realtime / 381 contention-bulk /
+  535 besteffort — in `classifier/test_data/real_flows.csv`, with `byte_rate`
+  as a sixth feature (added to distinguish rate-limited realtime from
+  uncapped bulk). Two live-path bugs fixed in `classify_stream()`:
+  timestamp source (`time.time()` → `float(pkt.time)`) and ACK filter
+  (exact flags match → payload-length check). NIC offloading must be
+  disabled before any live classification run:
+  `sudo ethtool -K <iface> tso off gso off gro off`.
+  Targeted live failure test passed: idle link + uncapped TCP bulk →
+  `mean_size=1514B, tier=bulk`. Held-out accuracy: 99.5% on 200 fresh
+  samples, 92.16% on 638 fresh idle-bulk windows specifically.
+
+**Phase 1 is done when:** ~~the classifier correctly identifies all three
 traffic types on demand, the priority fix is reconfirmed live, and the
-automated script runs start-to-finish without errors at least once.
+automated script runs start-to-finish without errors at least once.~~
+**Done. See above.**
 
 ---
 
@@ -233,29 +237,36 @@ automated script runs start-to-finish without errors at least once.
 
 **Goal:** produce the actual measured numbers the final report needs.
 
-- **Person A:** Run the full automated experiment
-  (`automation/run_all.sh 3 15` or more trials if time allows) — this
-  generates all three traffic types competing simultaneously, with the
-  prioritization system both off and on, and records throughput/jitter/loss
-  for each. This produces `results/table1_summary.csv` — this file *is*
-  Table I for the report.
-- **Person B:** While Person A's experiment runs, review the saved
-  queue/flow snapshots it produces (`results/ovs_snapshots/`) and confirm
-  they match what you'd expect given the queue configuration from Phase 1.
-  Flag anything that looks inconsistent.
-- **Person C:** Separately, capture a handful of fresh traffic samples (not
-  used in training) and run `automation/eval_classifier.py` against them to
-  get real accuracy/precision/recall/F1 numbers and a confusion matrix for
-  the report. Also, during Person A's experiment run, keep the dashboard
-  open and confirm it's genuinely showing live data as the experiment
-  happens (not just a static page), and that toggling prioritization
-  on/off from the dashboard visibly changes the measured numbers you're
-  watching.
+> **Person A's Phase 2 work is already done** — Table I results and OVS
+> snapshots are already pushed (see Phase 1 completion above). Person A
+> has no new Phase 2 tasks unless the team decides a re-run is needed.
 
-**Phase 2 is done when:** you have a results CSV with real before/after
-numbers for all three traffic tiers, classifier accuracy numbers with a
-confusion matrix, and confirmation that the dashboard genuinely tracks the
-live system.
+- **Person A (Yamica):** ~~Run the full automated experiment~~ **DONE.**
+  `results/table1_summary.csv` is Table I for the report. OVS snapshots
+  are in `results/ovs_snapshots/` — read the README there before
+  referencing any counter values in the report.
+
+- **Person B (Tanishka):** Review `results/ovs_snapshots/` and confirm the
+  engine-off vs engine-on snapshots match what you'd expect from the Phase 1
+  queue configuration. Specifically: engine-off rules should show no
+  `set_queue` action; engine-on rules should show `set_queue:0/1/2` on the
+  correct ports. Flag anything inconsistent. Note: counters are cumulative
+  across trials, not per-trial — see `results/ovs_snapshots/README.md`.
+
+- **Person C (Monica):** Two tasks:
+  1. Capture a batch of fresh traffic samples **not used in training**
+     (different capture session, not from `real_flows.csv`) and run
+     `automation/eval_classifier.py` against them to get real
+     precision/recall/F1 and a confusion matrix for the report. Remember
+     to disable NIC offloading before capture.
+  2. During a `run_all.sh` experiment run, keep the dashboard open and
+     confirm it shows live data as the experiment runs (not a static page),
+     and that toggling prioritization on/off from the dashboard visibly
+     changes the numbers you're watching.
+
+**Phase 2 is done when:** classifier accuracy numbers with a confusion
+matrix are produced from fresh held-out data, and the dashboard is
+confirmed live and responsive to the on/off toggle.
 
 ---
 
