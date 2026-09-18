@@ -1,0 +1,26 @@
+Evaluated on 288 held-out samples from classifier/test_data/holdout_flows.csv
+
+Accuracy: 0.976
+
+Tier         Precision    Recall       F1           Support
+besteffort   1.000        1.000        1.000        96
+bulk         0.989        0.938        0.963        96
+realtime     0.941        0.990        0.964        96
+
+Confusion matrix (rows = true, cols = predicted):
+        besteffort        bulk    realtime
+besteffort        96           0           0
+bulk             0          90           6
+realtime         0           1          95
+
+Full classification report:
+              precision    recall  f1-score   support
+
+  besteffort       1.00      1.00      1.00        96
+        bulk       0.99      0.94      0.96        96
+    realtime       0.94      0.99      0.96        96
+
+    accuracy                           0.98       288
+   macro avg       0.98      0.98      0.98       288
+weighted avg       0.98      0.98      0.98       288
+
