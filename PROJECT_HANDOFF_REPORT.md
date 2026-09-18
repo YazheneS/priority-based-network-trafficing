@@ -254,19 +254,23 @@ automated script runs start-to-finish without errors at least once.~~
   across trials, not per-trial — see `results/ovs_snapshots/README.md`.
 
 - **Person C (Monica):** Two tasks:
-  1. Capture a batch of fresh traffic samples **not used in training**
-     (different capture session, not from `real_flows.csv`) and run
-     `automation/eval_classifier.py` against them to get real
-     precision/recall/F1 and a confusion matrix for the report. Remember
-     to disable NIC offloading before capture.
-  2. During a `run_all.sh` experiment run, keep the dashboard open and
-     confirm it shows live data as the experiment runs (not a static page),
-     and that toggling prioritization on/off from the dashboard visibly
-     changes the numbers you're watching.
+  1. ~~Capture a batch of fresh traffic samples not used in training and
+     run `automation/eval_classifier.py`~~ **DONE.** Results in
+     `results/phase2_eval_report.txt`. 288 fresh balanced samples
+     (96/class): **97.6% overall accuracy**. Besteffort 1.00/1.00/1.00,
+     Bulk 0.989/0.938/0.963, Realtime 0.941/0.990/0.964
+     (precision/recall/F1). 7 misclassified: 6 bulk→realtime,
+     1 realtime→bulk, 0 besteffort errors. sklearn version note: model
+     was trained on 1.9.0, evaluated on 1.4.1 — results are valid but
+     note for reproducibility.
+  2. Dashboard live verification — **still pending.** During a
+     `run_all.sh` run, confirm the dashboard shows live data and the
+     on/off toggle visibly changes the measured numbers in real time.
 
-**Phase 2 is done when:** classifier accuracy numbers with a confusion
+**Phase 2 is done when:** ~~classifier accuracy numbers with a confusion
 matrix are produced from fresh held-out data, and the dashboard is
-confirmed live and responsive to the on/off toggle.
+confirmed live and responsive to the on/off toggle.~~
+Eval: **done** (97.6%). Dashboard verification: **pending (Person C)**.
 
 ---
 
