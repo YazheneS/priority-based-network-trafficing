@@ -77,16 +77,8 @@ priority=20,tcp,tp_dst=5201 actions=NORMAL
 Therefore, the Trial 1 engine-off snapshot is consistent with the expected engine-off configuration.
 
 **Evidence — Screenshot 1** (`engine_off_trial1_dump_flows.txt`)
+<img width="867" height="291" alt="Screenshot 2026-09-19 181026" src="https://github.com/user-attachments/assets/5be6bfc2-b593-404c-bde9-9bdfd2617fa8" />
 
-<!-- ============================================================
-     INSERT SCREENSHOT 1 HERE
-     Source file : results/ovs_snapshots/engine_off_trial1_dump_flows.txt
-     Save image as: screenshots/engine_off_trial1.png
-     Then remove the comment markers around the line below.
-     ============================================================ -->
-<!-- ![Screenshot 1 — Engine-OFF Trial 1 flow snapshot](screenshots/engine_off_trial1.png) -->
-
----
 
 ### 4.2 Engine-ON — Trial 1
 
@@ -108,13 +100,8 @@ The observed queue assignments exactly match the expected Phase 1 configuration.
 
 **Evidence — Screenshot 2** (`engine_on_trial1_dump_flows.txt`)
 
-<!-- ============================================================
-     INSERT SCREENSHOT 2 HERE
-     Source file : results/ovs_snapshots/engine_on_trial1_dump_flows.txt
-     Save image as: screenshots/engine_on_trial1.png
-     Then remove the comment markers around the line below.
-     ============================================================ -->
-<!-- ![Screenshot 2 — Engine-ON Trial 1 flow snapshot](screenshots/engine_on_trial1.png) -->
+<img width="930" height="302" alt="Screenshot 2026-09-19 181130" src="https://github.com/user-attachments/assets/2d6ecbef-8c67-4153-876f-01712f7582fb" />
+
 
 ---
 
@@ -141,13 +128,8 @@ Therefore, the Trial 2 engine-off configuration is consistent with the expected 
 
 **Evidence — Screenshot 3** (`engine_off_trial2_dump_flows.txt`)
 
-<!-- ============================================================
-     INSERT SCREENSHOT 3 HERE
-     Source file : results/ovs_snapshots/engine_off_trial2_dump_flows.txt
-     Save image as: screenshots/engine_off_trial2.png
-     Then remove the comment markers around the line below.
-     ============================================================ -->
-<!-- ![Screenshot 3 — Engine-OFF Trial 2 flow snapshot](screenshots/engine_off_trial2.png) -->
+<img width="921" height="295" alt="Screenshot 2026-09-19 181303" src="https://github.com/user-attachments/assets/673f2523-562e-4e8e-bf87-8401a0e6db3d" />
+
 
 ---
 
@@ -171,13 +153,9 @@ These assignments match the expected Phase 1 QoS configuration.
 
 **Evidence — Screenshot 4** (`engine_on_trial2_dump_flows.txt`)
 
-<!-- ============================================================
-     INSERT SCREENSHOT 4 HERE
-     Source file : results/ovs_snapshots/engine_on_trial2_dump_flows.txt
-     Save image as: screenshots/engine_on_trial2.png
-     Then remove the comment markers around the line below.
-     ============================================================ -->
-<!-- ![Screenshot 4 — Engine-ON Trial 2 flow snapshot](screenshots/engine_on_trial2.png) -->
+<img width="932" height="295" alt="Screenshot 2026-09-19 181408" src="https://github.com/user-attachments/assets/49b875e5-30a2-4b19-b794-6f02de73394e" />
+
+
 
 ---
 
@@ -204,13 +182,8 @@ Therefore, the Trial 3 engine-off configuration is consistent with the expected 
 
 **Evidence — Screenshot 5** (`engine_off_trial3_dump_flows.txt`)
 
-<!-- ============================================================
-     INSERT SCREENSHOT 5 HERE
-     Source file : results/ovs_snapshots/engine_off_trial3_dump_flows.txt
-     Save image as: screenshots/engine_off_trial3.png
-     Then remove the comment markers around the line below.
-     ============================================================ -->
-<!-- ![Screenshot 5 — Engine-OFF Trial 3 flow snapshot](screenshots/engine_off_trial3.png) -->
+<img width="935" height="298" alt="Screenshot 2026-09-19 181450" src="https://github.com/user-attachments/assets/374795ba-6ec4-4d1e-aeb3-3d819283e416" />
+
 
 ---
 
@@ -234,13 +207,8 @@ The queue assignments match the expected Phase 1 QoS configuration.
 
 **Evidence — Screenshot 6** (`engine_on_trial3_dump_flows.txt`)
 
-<!-- ============================================================
-     INSERT SCREENSHOT 6 HERE
-     Source file : results/ovs_snapshots/engine_on_trial3_dump_flows.txt
-     Save image as: screenshots/engine_on_trial3.png
-     Then remove the comment markers around the line below.
-     ============================================================ -->
-<!-- ![Screenshot 6 — Engine-ON Trial 3 flow snapshot](screenshots/engine_on_trial3.png) -->
+<img width="922" height="295" alt="Screenshot 2026-09-19 181539" src="https://github.com/user-attachments/assets/2b74bafe-6ec9-4f1b-ab73-d0f59ecbc04a" />
+
 
 ---
 
@@ -294,38 +262,4 @@ No inconsistency was identified in the reviewed OVS flow snapshots. Therefore, t
 
 ---
 
-## 10. Evidence Files
 
-The verification was performed using the following automatically generated OVS snapshots:
-
-```text
-results/ovs_snapshots/engine_off_trial1_dump_flows.txt
-results/ovs_snapshots/engine_on_trial1_dump_flows.txt
-
-results/ovs_snapshots/engine_off_trial2_dump_flows.txt
-results/ovs_snapshots/engine_on_trial2_dump_flows.txt
-
-results/ovs_snapshots/engine_off_trial3_dump_flows.txt
-results/ovs_snapshots/engine_on_trial3_dump_flows.txt
-```
-
-The interpretation of cumulative OVS counters is documented in:
-
-```text
-results/ovs_snapshots/README.md
-```
-
----
-
-## 11. Phase 2 Contribution
-
-This verification confirms the correspondence between the configured QoS traffic classes and the actual OVS flow rules observed during the experimental run.
-
-Specifically, it confirms that:
-
-1. Engine-OFF mode does not apply queue assignments.
-2. Engine-ON mode assigns real-time UDP traffic to Q0.
-3. Engine-ON mode assigns best-effort/default IP traffic to Q1.
-4. Engine-ON mode assigns bulk TCP traffic to Q2.
-5. The expected rule behaviour is maintained across all three trials.
-6. OVS counters are correctly interpreted as cumulative counters rather than independent per-trial measurements.
