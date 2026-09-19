@@ -246,12 +246,12 @@ automated script runs start-to-finish without errors at least once.~~
   are in `results/ovs_snapshots/` — read the README there before
   referencing any counter values in the report.
 
-- **Person B (Tanishka):** Review `results/ovs_snapshots/` and confirm the
-  engine-off vs engine-on snapshots match what you'd expect from the Phase 1
-  queue configuration. Specifically: engine-off rules should show no
-  `set_queue` action; engine-on rules should show `set_queue:0/1/2` on the
-  correct ports. Flag anything inconsistent. Note: counters are cumulative
-  across trials, not per-trial — see `results/ovs_snapshots/README.md`.
+- **Person B (Tanishka):** ~~Review `results/ovs_snapshots/`~~ **DONE.**
+  All 6 snapshots (engine-off/on x 3 trials) verified against actual files.
+  Engine-off: no `set_queue` action on any trial. Engine-on: `udp:5000->Q0`,
+  `ip->Q1`, `tcp:5201->Q2` consistent across all 3 trials. Cumulative counter
+  interpretation correctly documented. Full doc:
+  `docs/person-b-phase2/verification.md`.
 
 - **Person C (Monica):** Two tasks:
   1. ~~Capture a batch of fresh traffic samples not used in training and
