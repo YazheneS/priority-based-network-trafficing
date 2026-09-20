@@ -263,14 +263,24 @@ automated script runs start-to-finish without errors at least once.~~
      1 realtime→bulk, 0 besteffort errors. sklearn version note: model
      was trained on 1.9.0, evaluated on 1.4.1 — results are valid but
      note for reproducibility.
-  2. Dashboard live verification — **still pending.** During a
-     `run_all.sh` run, confirm the dashboard shows live data and the
-     on/off toggle visibly changes the measured numbers in real time.
+  2. ~~Dashboard live verification~~ **DONE.** Confirmed during a
+     `run_all.sh` run: dashboard shows live per-tier metrics via WebSocket,
+     and the on/off toggle visibly changes measured throughput/jitter in
+     real time. Two bugs found and fixed in the process (cherry-picked
+     from `dashboard-fix` branch by Yamica):
+     - `dashboard/backend/server.js`: metrics read error now returns last
+       known good state instead of wiping the display (lastMetrics cache)
+     - `automation/experiment_runner.py`: removed `-u` flag from iperf3
+       server startup (was rejecting TCP connections); increased server
+       startup wait from 1s to 3s for stability
+
+> **STATUS: COMPLETE** — Phase 2 closed. All three members done.
+> Person B and Person C: move to Phase 3.
 
 **Phase 2 is done when:** ~~classifier accuracy numbers with a confusion
 matrix are produced from fresh held-out data, and the dashboard is
 confirmed live and responsive to the on/off toggle.~~
-Eval: **done** (97.6%). Dashboard verification: **pending (Person C)**.
+**Done. See above.**
 
 ---
 

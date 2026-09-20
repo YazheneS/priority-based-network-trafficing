@@ -37,12 +37,15 @@ app.use(express.static(path.join(__dirname, "..", "frontend", "build"))); // ser
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server, path: "/ws" });
 
+let lastMetrics = { events: [], controller_status: null };
+
 function readMetrics() {
   try {
     const raw = fs.readFileSync(METRICS_PATH, "utf-8");
-    return JSON.parse(raw);
+    lastMetrics = JSON.parse(raw);
+    return lastMetrics;
   } catch (err) {
-    return { events: [], controller_status: null };
+    return lastMetrics;
   }
 }
 

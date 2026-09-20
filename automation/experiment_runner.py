@@ -132,9 +132,8 @@ def run_iperf_trial(net, duration):
     time.sleep(0.5)
 
     for _, port, proto, _, _ in TRAFFIC_PLAN:
-        udp_flag = "-u" if proto == "udp" else ""
-        h4.cmd(f"iperf3 -s {udp_flag} -p {port} -D --logfile /tmp/iperf3_server_{port}.log")
-    time.sleep(1)
+        h4.cmd(f"iperf3 -s -p {port} -D --logfile /tmp/iperf3_server_{port}.log")
+    time.sleep(3)
 
     # Launch all clients concurrently, each writing JSON to a temp file.
     procs = []
@@ -223,7 +222,7 @@ def main():
         state_label = "engine_on" if engine_state else "engine_off"
         for trial in range(1, args.trials + 1):
             print(f"\n[experiment_runner] === Trial {trial}/{args.trials}, engine={state_label} ===")
-            clean_flow_table()
+            #clean_flow_table()
             set_engine(engine_state)
             time.sleep(1)
 
