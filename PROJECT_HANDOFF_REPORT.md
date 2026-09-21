@@ -38,12 +38,12 @@ does all four things together. That's the whole novelty claim: *integration,
 not invention*. Every technical decision in this codebase should trace back
 to one of these four papers (cite them, don't introduce unsourced claims):
 
-| Paper | What we took from it |
-|---|---|
-| Shahriar et al., arXiv:2403.15975 | The math for splitting bandwidth fairly between tiers, with a guaranteed minimum so nothing gets starved to zero |
-| Serag et al., Springer JNSM 2025 | The approach of classifying traffic from behavior (packet timing/size) instead of manual rules |
-| Gorkemli et al., IEEE Doc. 7130421 | Why strict "always serve tier 1 first, no matter what" designs are bad — they can starve everything else |
-| Deo et al., PeerJ CS 2024 | Why static IP/port-based prioritization (the old-fashioned way) doesn't hold up in practice |
+| Paper                              | What we took from it                                                                                             |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Shahriar et al., arXiv:2403.15975  | The math for splitting bandwidth fairly between tiers, with a guaranteed minimum so nothing gets starved to zero |
+| Serag et al., Springer JNSM 2025   | The approach of classifying traffic from behavior (packet timing/size) instead of manual rules                   |
+| Gorkemli et al., IEEE Doc. 7130421 | Why strict "always serve tier 1 first, no matter what" designs are bad — they can starve everything else        |
+| Deo et al., PeerJ CS 2024          | Why static IP/port-based prioritization (the old-fashioned way) doesn't hold up in practice                      |
 
 ---
 
@@ -60,12 +60,12 @@ Think of it as a pipeline. Traffic flows through all four stages:
                                                                  OpenFlow)                  on/off)
 ```
 
-| Stage | Files | What it does in one sentence |
-|---|---|---|
-| 1. Network | `topology/topo.py`, `topology/setup_queues.sh` | Creates 4 virtual computers and a virtual switch with 3 bandwidth "lanes" (queues), each with a guaranteed minimum but able to borrow spare capacity |
-| 2. Classifier | `classifier/traffic_classifier.py` | A small decision-tree model that looks at a flow's packet-size and timing statistics and outputs a label: `realtime`, `besteffort`, or `bulk` |
-| 3. Controller | `controller/priority_controller.py`, `integration/bridge.py` | The "brain" — receives the classifier's decision and tells the switch which lane to put that traffic in, live, while traffic is flowing |
-| 4. Dashboard | `dashboard/backend/`, `dashboard/frontend/` | A web page showing live per-tier network stats and a switch to turn the whole prioritization system on/off |
+| Stage         | Files                                                            | What it does in one sentence                                                                                                                         |
+| ------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Network    | `topology/topo.py`, `topology/setup_queues.sh`               | Creates 4 virtual computers and a virtual switch with 3 bandwidth "lanes" (queues), each with a guaranteed minimum but able to borrow spare capacity |
+| 2. Classifier | `classifier/traffic_classifier.py`                             | A small decision-tree model that looks at a flow's packet-size and timing statistics and outputs a label:`realtime`, `besteffort`, or `bulk`   |
+| 3. Controller | `controller/priority_controller.py`, `integration/bridge.py` | The "brain" — receives the classifier's decision and tells the switch which lane to put that traffic in, live, while traffic is flowing             |
+| 4. Dashboard  | `dashboard/backend/`, `dashboard/frontend/`                  | A web page showing live per-tier network stats and a switch to turn the whole prioritization system on/off                                           |
 
 **You don't need to understand every line of code to help test this.** You
 need to understand: each of these 4 pieces has been individually confirmed
@@ -104,12 +104,14 @@ Be aware of these before you start testing — they'll affect your results if
 you don't account for them.
 
 ### Issue 1 — The classifier can't recognize "besteffort" yet
+
 It's only ever been trained on real-time and bulk examples. Right now it's
 effectively a two-category classifier pretending to be three-category. This
 is probably the single most important thing to fix before final results are
 trustworthy — see Phase 1.
 
 ### Issue 2 — Old test rules can linger and cause confusing results
+
 Earlier in the project, rules were sometimes typed in by hand directly
 (bypassing the automatic system) to sanity-check things. If those aren't
 cleared out before a real test, you can end up "confirming" behavior that's
@@ -120,6 +122,7 @@ clear it yourself first (command's in the root README's troubleshooting
 table).
 
 ### Issue 3 — RESOLVED: dynamic rules were being silently ignored
+
 The system uses a priority number to decide which traffic rule "wins" when
 more than one could apply. The rule the classifier installs used to have a
 *lower* priority number than a leftover default rule covering the same
@@ -132,6 +135,7 @@ actually been measuring the wrong thing, not genuine classifier-driven
 behavior — don't reuse pre-fix numbers in the report.
 
 ### Issue 4 — RESOLVED: main.tex was never created in the first place
+
 **Update:** confirmed via a full search of every commit on every branch —
 `main.tex` was never created. It's not lost, it never existed as a separate
 file. There is no original to go find.
@@ -144,6 +148,7 @@ that section rather than treating it as a fragment waiting to be slotted
 into a missing `main.tex`.
 
 ### Issue 5 — Frontend has flagged dependency warnings
+
 `npm install` in the dashboard frontend reports a number of vulnerabilities
 in third-party packages. The app works fine regardless — this is a
 "someday" cleanup item, not something blocking testing.
@@ -161,8 +166,7 @@ in third-party packages. The app works fine regardless — this is a
   Running a script with the wrong one gives a "module not found" error that
   looks scarier than it is — the root README's troubleshooting table has
   the exact fix.
-- The command to start the controller is `osken-manager
-  controller/priority_controller.py` — not anything with extra flags or a
+- The command to start the controller is `osken-manager controller/priority_controller.py` — not anything with extra flags or a
   different spelling. (This tripped people up before; it's correct now,
   just flagging it since old notes elsewhere may say otherwise.)
 - The dashboard needs to be opened from Windows using the WSL2 machine's IP
@@ -183,11 +187,11 @@ Person C** as placeholders — assign these to whichever three of you are
 picking up the remaining testing, in whatever order makes sense for your
 schedules.
 
-| Role | Area |
-|---|---|
-| **Person A** | Measurement — running experiments, recording results |
+| Role               | Area                                                                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Person A** | Measurement — running experiments, recording results                                                                               |
 | **Person B** | Network & Integration Verification — bandwidth-lane configuration, confirming the controller fix holds up live, final report merge |
-| **Person C** | Classifier & Dashboard — retraining the classifier, dashboard verification |
+| **Person C** | Classifier & Dashboard — retraining the classifier, dashboard verification                                                         |
 
 **Do not skip ahead between phases.** Each phase depends on the one before
 it being genuinely done, not just attempted.
@@ -201,19 +205,17 @@ it being genuinely done, not just attempted.
 
 **What was done and verified (do not redo any of this):**
 
-- **Person A (Yamica):** Full experiment run completed (`run_all.sh 3 15`),
+- **Person A (Yamica):** ~~Full experiment run completed~~ **DONE.** (`run_all.sh 3 15`),
   Table I results pushed (`results/table1_results.csv`,
   `results/table1_summary.csv`), OVS flow/queue snapshots pushed
   (`results/ovs_snapshots/` — see README there for correct interpretation
   of cumulative counters). Phase 1 smoke test superseded by the full run.
-
-- **Person B (Tanishka):** Queue configuration verified live — Q0 6/10 Mbps,
+- **Person B (Tanishka):** ~~Queue configuration verified live~~ **DONE.** — Q0 6/10 Mbps,
   Q1 2/8 Mbps, Q2 1/10 Mbps (guaranteed/ceiling). Issue 3 fix confirmed
   with non-zero live traffic counters on the `udp,tp_dst=5000` and
   `tcp,tp_dst=5201` rules during an active run. Full verification doc:
   `docs/person_b_phase1/person-b-phase1-verification.md`.
-
-- **Person C (Monica):** Three-class classifier confirmed working.
+- **Person C (Monica):** ~~Three-class classifier confirmed working.~~**DONE.**
   Final dataset: 1,701 samples — 785 realtime / 381 contention-bulk /
   535 besteffort — in `classifier/test_data/real_flows.csv`, with `byte_rate`
   as a sixth feature (added to distinguish rate-limited realtime from
@@ -245,15 +247,14 @@ automated script runs start-to-finish without errors at least once.~~
   `results/table1_summary.csv` is Table I for the report. OVS snapshots
   are in `results/ovs_snapshots/` — read the README there before
   referencing any counter values in the report.
-
 - **Person B (Tanishka):** ~~Review `results/ovs_snapshots/`~~ **DONE.**
   All 6 snapshots (engine-off/on x 3 trials) verified against actual files.
   Engine-off: no `set_queue` action on any trial. Engine-on: `udp:5000->Q0`,
   `ip->Q1`, `tcp:5201->Q2` consistent across all 3 trials. Cumulative counter
   interpretation correctly documented. Full doc:
   `docs/person-b-phase2/verification.md`.
-
 - **Person C (Monica):** Two tasks:
+
   1. ~~Capture a batch of fresh traffic samples not used in training and
      run `automation/eval_classifier.py`~~ **DONE.** Results in
      `results/phase2_eval_report.txt`. 288 fresh balanced samples
@@ -318,24 +319,24 @@ are checked, and the team has done one clean final demo run together.
 
 ## 7. Quick Reference — Who to Ask About What
 
-| Question about... | Ask |
-|---|---|
-| Network topology, bandwidth queues, HTB configuration, confirming the controller fix | Person B |
-| Classifier accuracy, model training, dashboard | Person C |
-| Test results, measurements, Table I | Person A |
-| "How do I even run this thing" | Root `README.md` first, then whoever's around |
+| Question about...                                                                    | Ask                                            |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------- |
+| Network topology, bandwidth queues, HTB configuration, confirming the controller fix | Person B                                       |
+| Classifier accuracy, model training, dashboard                                       | Person C                                       |
+| Test results, measurements, Table I                                                  | Person A                                       |
+| "How do I even run this thing"                                                       | Root`README.md` first, then whoever's around |
 
 ---
 
 ## 8. Before You Start — Checklist
 
 - [ ] Read the root `README.md` in full, especially "Environment Setup" and
-      "How to Run"
+  "How to Run"
 - [ ] Confirm you can `git pull` the latest code
 - [ ] Confirm your WSL2 environment has the project cloned under your Linux
-      home directory, not `/mnt/c/...`
+  home directory, not `/mnt/c/...`
 - [ ] Run `sudo -l` to check if passwordless sudo is already set up for you,
-      or set it up per the README if not
+  or set it up per the README if not
 - [ ] Do a first test run of whatever your Phase 1 task is *before* trying
-      to fix anything — confirm you can reproduce the current behavior
-      first, so you know what "fixed" looks like compared to
+  to fix anything — confirm you can reproduce the current behavior
+  first, so you know what "fixed" looks like compared to
