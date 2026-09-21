@@ -215,7 +215,7 @@ it being genuinely done, not just attempted.
   with non-zero live traffic counters on the `udp,tp_dst=5000` and
   `tcp,tp_dst=5201` rules during an active run. Full verification doc:
   `docs/person_b_phase1/person-b-phase1-verification.md`.
-- **Person C (Monica):** ~~Three-class classifier confirmed working.~~**DONE.**
+- **Person C (Monica):** ~~Three-class classifier confirmed working. -— **DONE.**
   Final dataset: 1,701 samples — 785 realtime / 381 contention-bulk /
   535 besteffort — in `classifier/test_data/real_flows.csv`, with `byte_rate`
   as a sixth feature (added to distinguish rate-limited realtime from
@@ -243,37 +243,31 @@ automated script runs start-to-finish without errors at least once.~~
 > snapshots are already pushed (see Phase 1 completion above). Person A
 > has no new Phase 2 tasks unless the team decides a re-run is needed.
 
-- **Person A (Yamica):** ~~Run the full automated experiment~~ **DONE.**
-  `results/table1_summary.csv` is Table I for the report. OVS snapshots
-  are in `results/ovs_snapshots/` — read the README there before
-  referencing any counter values in the report.
+- **Person A (Yamica): Two tasks:**
+
+  1. ~~Run the full automated experiment~~ **DONE.**
+     `results/table1_summary.csv` is Table I for the report. OVS snapshots
+     are in `results/ovs_snapshots/` — read the README there before
+     referencing any counter values in the report.
+  2. ~~Dashboard live verification~~ **DONE.** Confirmed during a
+     `run_all.sh` run: dashboard shows live per-tier metrics via WebSocket, and the on/off toggle visibly changes measured throughput/jitter in real time. Two bugs found and fixed in the process (cherry-picked from `dashboard-fix` branch by Yamica):- `dashboard/backend/server.js`: metrics read error now returns last known good state instead of wiping the display (lastMetrics cache)`automation/experiment_runner.py`: removed `-u` flag from iperf3
+     server startup (was rejecting TCP connections); increased server
+     startup wait from 1s to 3s for stability
 - **Person B (Tanishka):** ~~Review `results/ovs_snapshots/`~~ **DONE.**
   All 6 snapshots (engine-off/on x 3 trials) verified against actual files.
   Engine-off: no `set_queue` action on any trial. Engine-on: `udp:5000->Q0`,
   `ip->Q1`, `tcp:5201->Q2` consistent across all 3 trials. Cumulative counter
   interpretation correctly documented. Full doc:
   `docs/person-b-phase2/verification.md`.
-- **Person C (Monica):** Two tasks:
-
-  1. ~~Capture a batch of fresh traffic samples not used in training and
-     run `automation/eval_classifier.py`~~ **DONE.** Results in
-     `results/phase2_eval_report.txt`. 288 fresh balanced samples
-     (96/class): **97.6% overall accuracy**. Besteffort 1.00/1.00/1.00,
-     Bulk 0.989/0.938/0.963, Realtime 0.941/0.990/0.964
-     (precision/recall/F1). 7 misclassified: 6 bulk→realtime,
-     1 realtime→bulk, 0 besteffort errors. sklearn version note: model
-     was trained on 1.9.0, evaluated on 1.4.1 — results are valid but
-     note for reproducibility.
-  2. ~~Dashboard live verification~~ **DONE.** Confirmed during a
-     `run_all.sh` run: dashboard shows live per-tier metrics via WebSocket,
-     and the on/off toggle visibly changes measured throughput/jitter in
-     real time. Two bugs found and fixed in the process (cherry-picked
-     from `dashboard-fix` branch by Yamica):
-     - `dashboard/backend/server.js`: metrics read error now returns last
-       known good state instead of wiping the display (lastMetrics cache)
-     - `automation/experiment_runner.py`: removed `-u` flag from iperf3
-       server startup (was rejecting TCP connections); increased server
-       startup wait from 1s to 3s for stability
+- **Person C (Monica):**  ~~Capture a batch of fresh traffic samples not used in training and
+  run `automation/eval_classifier.py`~~ **DONE.** Results in
+  `results/phase2_eval_report.txt`. 288 fresh balanced samples
+  (96/class): **97.6% overall accuracy**. Besteffort 1.00/1.00/1.00,
+  Bulk 0.989/0.938/0.963, Realtime 0.941/0.990/0.964
+  (precision/recall/F1). 7 misclassified: 6 bulk→realtime,
+  1 realtime→bulk, 0 besteffort errors. sklearn version note: model
+  was trained on 1.9.0, evaluated on 1.4.1 — results are valid but
+  note for reproducibility.
 
 > **STATUS: COMPLETE** — Phase 2 closed. All three members done.
 > Person B and Person C: move to Phase 3.
