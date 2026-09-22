@@ -35,11 +35,44 @@ Shahriar et al.~\cite{shahriar2024}.
 
 Each tier is bound to a Linux-HTB queue on the switch's egress port:
 
-\begin{itemize}
-  \item \textbf{Tier 0 (Real-time):} minimum 6~Mbps, maximum 10~Mbps, highest scheduling priority.
-  \item \textbf{Tier 1 (Best-effort):} minimum 2~Mbps, maximum 8~Mbps.
-  \item \textbf{Tier 2 (Bulk):} minimum 1~Mbps (guaranteed floor), maximum 10~Mbps.
-\end{itemize}
+\begin{table}[h]
+\centering
+\caption{Tier-to-queue configuration}
+\label{tab:queue_configuration}
+\begin{tabular}{lcccl}
+\hline
+\textbf{Tier} & \textbf{Queue} & \textbf{Guaranteed Rate}
+& \textbf{Ceiling} & \textbf{OpenFlow Priority} \\
+\hline
+Real-time (video) & 0 & 6 Mbps & 10 Mbps & 20 \\
+Best-effort (browsing) & 1 & 2 Mbps & 8 Mbps & 5 \\
+Bulk (downloads) & 2 & 1 Mbps & 10 Mbps & 20 \\
+\hline
+\end{tabular}
+\end{table}
+
+The guaranteed rate represents the minimum bandwidth floor assigned to
+each queue rather than a hard bandwidth cap. The ceiling represents the
+maximum rate available to the queue, allowing unused capacity to be
+utilized when other traffic classes do not consume their allocated
+bandwidth. This implements the fairness-aware bandwidth-splitting
+approach of Shahriar et al.~\cite{shahriar2024}, while avoiding the
+strict-precedence starvation failure mode discussed by Gorkemli et
+al.~\cite{gorkemli2015}.
+
+The real-time queue receives a 6~Mbps guaranteed floor and a 10~Mbps
+ceiling. Best-effort traffic receives a 2~Mbps guaranteed floor and an
+8~Mbps ceiling, while bulk traffic receives a 1~Mbps guaranteed floor
+and a 10~Mbps ceiling. The non-zero floor for bulk traffic is
+intentional: although bulk traffic is deprioritized during contention,
+it is not completely starved.
+
+Thus, the configured ceiling is not a hard cap imposed independently of
+available capacity; it provides borrowable headroom when other tiers
+are not using their guaranteed share. Setting the guaranteed rate equal
+to the ceiling would instead create a hard-cap configuration and would
+not represent the primary bandwidth-sharing design evaluated in this
+work.
 
 Algorithm~\ref{alg:bandwidth-split} summarizes the bandwidth-allocation
 logic implemented by \texttt{priority\_controller.py}, adapted from
