@@ -1,8 +1,3 @@
-
-
-
-
-
 # Person C — Classifier Results and Debugging
 
 ## 1. Classifier Evaluation
@@ -98,84 +93,107 @@ To improve the feature representation, the classifier was extended with:
 
 ```text
 byte_rate
-
+```
 
 This feature provides an explicit measure of the amount of data transmitted per unit time and improved the classifier's ability to distinguish rate-limited realtime traffic from high-rate bulk traffic.
 
-5.2 Live Timestamp Issue
+### 5.2 Live Timestamp Issue
 
 Further problems appeared during live-path testing.
 
 The live classifier was initially using the wall-clock timestamp:
 
+```python
 time.time()
+```
 
 This did not correctly represent the timestamp associated with each captured packet and affected inter-arrival-time calculations.
 
 The implementation was corrected to use the packet capture timestamp:
 
+```python
 float(pkt.time)
-5.3 TCP ACK / Control Packet Filtering
+```
+
+This ensured that inter-arrival-time features were calculated from the actual packet timestamps.
+
+### 5.3 TCP ACK / Control Packet Filtering
 
 Another issue was found in the handling of TCP packets.
 
 The original filtering logic relied on an exact TCP-flags match, which could incorrectly handle TCP ACK/control packets.
 
-The live path was changed to use payload length so that TCP packets without application data were excluded from feature calculation.
+The live path was changed to use **payload length** so that TCP packets without application data were excluded from feature calculation.
 
 This prevented TCP control packets from distorting the behavioral features.
 
-5.4 NIC Offloading
+### 5.4 NIC Offloading
 
 NIC offloading was also disabled before live classification to avoid packet-processing artifacts.
 
+The following offloading features were disabled:
+
+```bash
 ethtool -K <interface> tso off gso off gro off
-5.5 Final Live Verification
+```
+
+This provided more reliable packet-level measurements for live traffic classification.
+
+### 5.5 Final Live Verification
 
 After these fixes, the targeted live bulk test correctly identified uncapped TCP bulk traffic as:
 
+```text
 tier=bulk
+```
 
-The final fresh held-out evaluation achieved 97.6% accuracy across all three traffic classes.
+The final fresh held-out evaluation achieved **97.6% accuracy across all three traffic classes**.
 
-6. Final Result
+---
 
-The final classifier was validated on 288 fresh held-out samples and achieved:
+## 6. Final Result
 
-Metric	Result
-Total held-out samples	288
-Correct predictions	281
-Incorrect predictions	7
-Overall accuracy	97.6%
-Besteffort samples	96
-Bulk samples	96
-Realtime samples	96
+The final classifier was validated on **288 fresh held-out samples** and achieved:
 
-The result demonstrates that the classifier can distinguish realtime, besteffort, and bulk traffic using packet-level behavioral features.
+| Metric | Result |
+|---|---:|
+| Total held-out samples | 288 |
+| Correct predictions | 281 |
+| Incorrect predictions | 7 |
+| Overall accuracy | **97.6%** |
+| Besteffort samples | 96 |
+| Bulk samples | 96 |
+| Realtime samples | 96 |
+
+The result demonstrates that the classifier can distinguish **realtime, besteffort, and bulk traffic** using packet-level behavioral features.
 
 The debugging process also confirmed that reliable live classification depends not only on the machine-learning model, but also on:
 
-Correct packet timestamps
-Appropriate TCP packet filtering
-Controlled network-interface behavior
-A suitable behavioral feature set
-7. Person C — Phase 3 Contribution
+- Correct packet timestamps
+- Appropriate TCP packet filtering
+- Controlled network-interface behavior
+- A suitable behavioral feature set
 
-The following work was completed as part of Person C's Phase 3 contribution:
+---
 
-Prepared the classifier-results section for the final project report.
-Documented the 97.6% accuracy obtained from 288 fresh held-out samples.
-Included class-wise precision, recall, F1-score, and support.
-Included the confusion matrix and misclassification analysis.
-Documented the classifier debugging and live-path fixes.
-Documented the final six-feature classifier feature set.
-Explained the role of byte_rate in distinguishing realtime and bulk traffic.
-Documented the packet timestamp correction using float(pkt.time).
-Documented the TCP payload-based filtering correction.
-Documented NIC offloading control for reliable live classification.
-Verified the final live bulk classification behavior.
-Provided the final classifier results and interpretation for integration into the project report.
+## 7. Person C — Phase 3 Contribution
 
+The following work was completed as part of **Person C's Phase 3 contribution**:
+
+- Prepared the **classifier-results section** for the final project report.
+- Documented the **97.6% accuracy** obtained from 288 fresh held-out samples.
+- Included class-wise **precision, recall, F1-score, and support**.
+- Included the **confusion matrix** and misclassification analysis.
+- Documented the classifier debugging and live-path fixes.
+- Documented the final **six-feature classifier feature set**.
+- Explained the role of `byte_rate` in distinguishing realtime and bulk traffic.
+- Documented the packet timestamp correction using `float(pkt.time)`.
+- Documented the TCP payload-based filtering correction.
+- Documented NIC offloading control for reliable live classification.
+- Verified the final live bulk classification behavior.
+- Provided the final classifier results and interpretation for integration into the project report.
+
+---
 
 ## Final Classifier Summary
 
@@ -190,3 +208,9 @@ Provided the final classifier results and interpretation for integration into th
 | Correct Predictions | 281 |
 | Incorrect Predictions | 7 |
 | Accuracy | **97.6%** |
+
+---
+
+### Person C Phase 3
+
+**Classifier evaluation, debugging, validation, and results documentation completed.**
