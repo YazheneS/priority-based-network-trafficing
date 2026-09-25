@@ -405,97 +405,89 @@ This is the next and final major task. See [Remaining Work](#remaining-work).
 
 ## Current Results Snapshot
 
-These are real measured numbers from testing so far — useful context, but
-**not yet the controlled before/after comparison** Table I needs.
+Final verified measurements from the Phase 2 controlled experiment
+(`automation/run_all.sh 3 15` — 3 trials × 15 seconds, all three tiers
+competing simultaneously). Full data in `results/table1_summary.csv`.
 
-| Traffic | Observed throughput | Notes |
-|---|---|---|
-| UDP, 8 Mbps offered | ~7.36–8.39 Mbps | Jitter as low as 0.013–0.026 ms, 0% loss |
-| UDP, 1 Mbps offered | ~1.05 Mbps | Jitter ~0.022–0.039 ms, 0% loss |
-| UDP, 4 Mbps offered | ~4.20 Mbps | Jitter ~0.013 ms, 0% loss |
-| TCP, queue 1 (besteffort) | ~3.06–7.66 Mbps | Varies with contention/HTB borrowing |
-| TCP, queue 2 (bulk) | ~3.01–9.63 Mbps | Varies with contention/HTB borrowing |
-| TCP, queue 2, competing with UDP | ~4.82 Mbps | Direct evidence of queue-based bandwidth management under contention |
+| Traffic tier | Engine OFF (baseline) | Engine ON (QoS) | Change |
+|---|---|---|---|
+| Real-time (UDP) — throughput | 2.68 Mbps ± 0.46 | **3.00 Mbps ± 0.00** | +12% |
+| Real-time (UDP) — jitter | 5.11 ms ± 1.32 | **0.84 ms ± 0.34** | **−84%** |
+| Real-time (UDP) — loss | 0% | 0% | — |
+| Best-effort (TCP) — throughput | 5.46 Mbps ± 1.25 | 5.59 Mbps ± 0.01 | +2% |
+| Bulk (TCP) — throughput | 1.39 Mbps ± 1.58 | 0.96 Mbps ± 0.00 | −31% |
 
-HTB class statistics have consistently shown **zero packet drops** across
-all three classes during testing.
+Bulk throughput reduction is intentional — deprioritized toward its
+guaranteed floor (1 Mbps), consistent with the starvation-safe design from
+Shahriar et al. (arXiv:2403.15975). Zero packet drops across all classes.
+
+**Classifier holdout accuracy (Phase 2):** 97.6% on 288 fresh balanced
+samples (96/class). Model trained on 1,701 real captured flows.
+Full report: `results/phase2_eval_report.txt`.
+
+| Class | Precision | Recall | F1 |
+|---|---|---|---|
+| Best-effort | 1.000 | 1.000 | 1.000 |
+| Bulk | 0.989 | 0.938 | 0.963 |
+| Real-time | 0.941 | 0.990 | 0.964 |
 
 ---
 
 ## Known Issues / Open Items
 
-These need resolution before Table I results can be trusted.
+All known issues from earlier phases are resolved. Documenting here for
+completeness and report reference.
 
-### 1. Classifier has no `besteffort` training examples yet
+### ✅ Issue 1 — Classifier had no besteffort training examples (RESOLVED)
+Originally the model was a binary realtime/bulk classifier. Now trained on
+1,701 real captured samples: 785 realtime, 381 bulk (contention-captured),
+535 besteffort. A sixth feature (`byte_rate`) was added to resolve
+realtime/bulk overlap on idle links.
 
-The retrained model (`model.real.joblib`) was trained on only 2 UDP
-(realtime) and 2 TCP (bulk) samples — **zero besteffort examples**. The
-learned tree is effectively a binary realtime/bulk split
-(`std_size <= 69.74`). This means the system currently cannot actually
-demonstrate 3-tier behavior end-to-end; besteffort traffic will fall
-arbitrarily onto whichever side of that threshold it happens to land on.
-**Needs:** a couple of labelled besteffort samples (e.g. moderate-rate,
-irregular traffic — a short HTTP request/response pattern rather than a
-steady iperf stream) added to the training set before Task 5.
+### ✅ Issue 2 — Stale flow table (RESOLVED)
+`clean_flow_table()` call was causing connectivity breaks between trials.
+Disabled — counters are now cumulative across trials (documented in
+`results/ovs_snapshots/README.md`). Table I numbers come from iperf3
+directly, unaffected.
 
-### 2. Possible stale-flow-table inconsistency
+### ✅ Issue 3 — Dynamic rules silently ignored (RESOLVED)
+Priority conflict between classifier-driven rules (priority 20) and the
+default catch-all (priority 5) was fixed. Verified live with non-zero
+packet/byte counters on the correct rules during active traffic.
 
-One test session observed the controller's `/status` reporting a flow as
-`tier: realtime, queue: 0` while the actual installed OVS rule
-(`dump-flows`) showed `tcp,tp_dst=5201 actions=set_queue:2`, with traffic
-volume confirming queue 2 was the one actually carrying the packets. Most
-likely cause: leftover manual `ovs-ofctl` rules from earlier hand-typed
-testing sessions still present in the flow table, taking precedence over
-what the controller/bridge later tried to install. **Treat OVS
-`dump-flows`/`queue-stats` as the authoritative source of truth for actual
-packet routing, not the controller's `/status` endpoint, until this is
-resolved.** Fix: always run `sudo ovs-ofctl -O OpenFlow13 del-flows s1` and
-restart the controller before a clean test run (now reflected in the
-[How to Run](#how-to-run-full-pipeline) instructions above).
+### ✅ Issue 4 — main.tex missing (RESOLVED / N/A)
+Confirmed main.tex was never created. Report is being assembled from
+`docs/implementation_section.tex` as the base document.
 
-### 3. Frontend dependency vulnerabilities
+### ✅ Issue 5 — Frontend dependency warnings (LOW PRIORITY)
+npm vulnerability warnings remain. App works correctly. Cleanup deferred
+post-submission.
 
-`npm install` in `dashboard/frontend` reports 28 vulnerabilities (9 low, 5
-moderate, 14 high) from the React/CRA dependency tree. The app compiles and
-runs correctly regardless. Treat as a dependency-maintenance item, not a
-functional blocker — **do not** run `npm audit fix --force` casually, since
-it can introduce breaking changes to `react-scripts`/`recharts` versions
-mid-project.
+### ✅ Live classifier bugs (RESOLVED)
+Two bugs fixed in `classify_stream()`:
+- Timestamp: `time.time()` → `float(pkt.time)` (was causing offline/live
+  feature mismatch under load)
+- ACK filter: exact `flags=="A"` → `len(tcp.payload)==0` (was letting
+  ECN-flagged ACKs, SYN-ACKs and FIN-ACKs through as fake flows)
 
-### 4. `main.tex` location
-
-The original Review 1 IEEE-formatted LaTeX paper (`main.tex`/`main.pdf`,
-Overleaf-ready) is not currently in this repository. Do not regenerate it
-from scratch — that risks citation drift from the anchor papers. Locate the
-original (Overleaf project history, team shared drive, or whoever last
-downloaded the Review 1 zip) and add it to the repo. Final Table I results
-should be merged into the actual `main.tex`, not left only in
-`implementation_section.tex`.
+**Note for live use:** disable NIC offloading before running the classifier:
+`sudo ethtool -K <iface> tso off gso off gro off`
 
 ---
 
-## Remaining Work
+## Remaining Work (Phase 3 — Report Assembly)
 
-In order:
+Phases 1 and 2 are complete. Remaining work is Phase 3 report assembly.
 
-1. **Add besteffort training samples and retrain the classifier** (see
-   Known Issue 1). Confirm all three tiers are actually reachable before
-   moving on.
-2. **Clear the flow table and confirm a clean baseline** (see Known Issue
-   2) before recording any Table I numbers.
-3. **Task 5 — Baseline vs. QoS Matrix:** run the same TCP/UDP/ping test
-   matrix used for the Week 4 baseline, twice, through the full live
-   pipeline (bridge + classifier + controller, not manual `ovs-ofctl`):
-   - Once with the priority engine **OFF** (`POST /toggle {"enabled":
-     false}`) — reproduces baseline conditions live.
-   - Once **ON**, with all three tiers of traffic competing simultaneously.
-   - Record throughput, jitter, and loss per tier for both runs.
-4. **Locate and integrate `main.tex`** (see Known Issue 4); fill in Table I
-   with the Task 5 results.
-5. **Final documentation pass:** confirm `docs/README.md` (this file),
-   `docs/PROJECT_HANDOFF_REPORT.md`, and `docs/implementation_section.tex`
-   are all consistent with the final measured results and final code state.
-6. **Final end-to-end demonstration** for review/submission.
+| Task | Owner | Status |
+|---|---|---|
+| Results table + chart (Table I) | Person A (Yamica) | ⏳ In progress |
+| Queue-config section (LaTeX) | Person B (Tanishka) | ✅ In `docs/implementation_section.tex` |
+| Classifier results section | Person C (Monica) | ✅ In `PERSON_C_README.md` |
+| Full report assembly + citation check | Person B (Tanishka) | ⏳ Waiting for Table I |
+| Master PPT | Yazhene | ⏳ In progress |
+| Final group live demo run | All | ⏳ Before submission |
+| Commit history email rewrite | Yazhene | ⏳ After all pushes complete |
 
 ---
 
@@ -576,3 +568,12 @@ python3 automation/eval_classifier.py \
 ```
 
 ---
+---
+
+## Lane Ownership
+
+| Person | Real name | Phase 1 | Phase 2 | Phase 3 |
+|---|---|---|---|---|
+| Person A | Yamica V | ✅ Table I experiment | ✅ OVS snapshots | ⏳ Results table/chart |
+| Person B | Tanishka K | ✅ Queue + OpenFlow verification | ✅ Snapshot review | ⏳ Report assembly |
+| Person C | Monica R | ✅ 3-class classifier + live bugs | ✅ Holdout eval + dashboard | ✅ Classifier results section |
