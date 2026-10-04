@@ -1,0 +1,44 @@
+\section{Experimental Results}
+\label{sec:results}
+
+The experimental evaluation was conducted using three trials of 15 seconds each for the
+baseline (priority engine OFF) and QoS-enabled (priority engine ON) configurations.
+Table~\ref{tab:table1} summarizes the measured throughput, realtime jitter, and packet
+loss.
+
+\begin{table}[t]
+\centering
+\caption{Baseline and QoS performance across traffic classes. Results are reported as mean $\pm$ standard deviation over three 15-second trials.}
+\label{tab:table1}
+\begin{tabular}{llcc}
+\hline
+\textbf{Traffic Class} & \textbf{Metric} & \textbf{Engine OFF} & \textbf{Engine ON} \\
+\hline
+Realtime & Throughput (Mbps) & $2.678 \pm 0.455$ & $3.000 \pm 0.000$ \\
+         & Jitter (ms)       & $5.110 \pm 1.080$ & $0.836 \pm 0.290$ \\
+         & Packet Loss (\%)  & $0.00$            & $0.00$ \\
+\hline
+Best-effort & Throughput (Mbps) & $5.461 \pm 1.248$ & $5.592 \pm 0.008$ \\
+\hline
+Bulk & Throughput (Mbps) & $1.391 \pm 1.576$ & $0.959 \pm 0.004$ \\
+\hline
+\end{tabular}
+\end{table}
+
+
+The throughput and realtime jitter comparisons are shown in
+Figures~\ref{fig:throughput-comparison} and~\ref{fig:jitter-comparison}, respectively.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{throughput_comparison.png}
+\caption{Throughput comparison between the baseline (Engine OFF) and QoS-enabled (Engine ON) configurations.}
+\label{fig:throughput-comparison}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{jitter_comparison.png}
+\caption{Realtime jitter comparison between the baseline (Engine OFF) and QoS-enabled (Engine ON) configurations.}
+\label{fig:jitter-comparison}
+\end{figure}
