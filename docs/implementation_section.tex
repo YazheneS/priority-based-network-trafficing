@@ -13,10 +13,9 @@
 \section{System Implementation}
 \label{sec:implementation}
 
-Having established the baseline degradation of real-time traffic under
-contention in Section~\ref{sec:baseline}\footnote{Reference to the Review 1
-baseline measurement section; rename to match your actual section label.},
-this section describes the implementation of the four-layer pipeline that
+The baseline experiments established degradation of real-time traffic under
+contention. This section describes the implementation of the four-layer
+pipeline that
 addresses it: an SDN priority engine, a behavioral traffic classifier, the
 integration bridge connecting the two, and a live monitoring dashboard.
 
@@ -261,14 +260,14 @@ Figures~\ref{fig:throughput-comparison} and~\ref{fig:jitter-comparison}, respect
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{throughput_comparison.png}
+\includegraphics[width=\columnwidth]{results/throughput_comparison.png}
 \caption{Throughput comparison between the baseline (Engine OFF) and QoS-enabled (Engine ON) configurations.}
 \label{fig:throughput-comparison}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{jitter_comparison.png}
+\includegraphics[width=\columnwidth]{results/jitter_comparison.png}
 \caption{Realtime jitter comparison between the baseline (Engine OFF) and QoS-enabled (Engine ON) configurations.}
 \label{fig:jitter-comparison}
 \end{figure}
