@@ -140,30 +140,46 @@ should be a clearly labeled *secondary* experiment, not the primary config.
 ```
 campus-qos-project/
 ├── topology/
-│   ├── topo.py                  # Mininet topology: h1/h2/h3 → s1 → h4, 10 Mbps bottleneck
-│   └── setup_queues.sh           # OVS linux-htb QoS: creates the 3 queues above
+│   ├── topo.py                      # Mininet topology: h1/h2/h3 → s1 → h4, 10 Mbps link
+│   └── setup_queues.sh              # OVS linux-htb QoS: Q0/Q1/Q2 with guaranteed rates
 ├── controller/
-│   └── priority_controller.py    # os-ken app, OpenFlow 1.3, REST API (/classify /toggle /status)
+│   └── priority_controller.py       # os-ken app, OpenFlow 1.3, REST /classify /toggle /status
 ├── classifier/
-│   ├── traffic_classifier.py     # feature extraction + decision tree + rule-based fallback
+│   ├── traffic_classifier.py        # 6-feature decision tree + rule-based fallback
 │   └── test_data/
-│       ├── test_flows.csv        # labelled synthetic training samples (original)
-│       ├── model.joblib          # model trained on synthetic samples (superseded)
-│       └── model.real.joblib     # model retrained on real captured Mininet traffic (current)
+│       ├── real_flows.csv           # 1,701 real captured Mininet flows (training set)
+│       ├── test_flows.csv           # synthetic holdout samples
+│       └── test_flows.synthetic.csv # extended synthetic test set
 ├── integration/
-│   └── bridge.py                 # sniffs live traffic → classifier → controller REST
+│   └── bridge.py                    # live sniff → classifier → controller REST
+├── automation/
+│   ├── run_all.sh                   # full experiment runner (3 trials × 15s, engine on/off)
+│   ├── experiment_runner.py         # core experiment logic + OVS snapshot capture
+│   ├── eval_classifier.py           # precision/recall/F1 + confusion matrix
+│   ├── summarize_results.py         # aggregates trial CSVs → table1_summary.csv
+│   ├── capture_besteffort.sh        # guided real besteffort capture in Mininet
+│   ├── extract_besteffort_features.py # pcap → real_flows.csv feature extractor
+│   └── backfill_byte_rate.py        # adds byte_rate to existing CSV rows
 ├── dashboard/
-│   ├── backend/
-│   │   ├── server.js             # Node/Express + WebSocket relay
-│   │   ├── package.json
-│   │   └── metrics_store.json    # rolling event log written by bridge.py, read by server.js
-│   └── frontend/
-│       ├── src/App.jsx           # React dashboard UI
-│       └── package.json
+│   ├── backend/server.js            # Node/Express + WebSocket, lastMetrics cache
+│   └── frontend/src/App.jsx         # React live dashboard + on/off toggle
 ├── docs/
-│   ├── README.md                 # (this file)
-│   ├── PROJECT_HANDOFF_REPORT.md # detailed task-by-task handoff / prompt for AI coding agents
-│   └── implementation_section.tex# Weeks 5-8 write-up, paste into main.tex
+│   ├── implementation_section.tex   # complete assembled report (System Implementation
+│   │                                #   + Experimental Results, all 4 citations)
+│   ├── phase3_results.tex           # standalone Experimental Results section
+│   ├── table1.tex                   # standalone Table I (throughput/jitter/loss)
+│   ├── figures.tex                  # standalone figure blocks
+│   ├── person_b_phase1/             # Phase 1 OVS queue + OpenFlow verification
+│   └── person-b-phase2/             # Phase 2 OVS snapshot review
+├── results/
+│   ├── table1_results.csv           # raw per-trial measurements (9 rows)
+│   ├── table1_summary.csv           # mean ± std per tier per engine state
+│   ├── phase2_eval_report.txt       # 97.6% accuracy on 288 fresh holdout samples
+│   ├── throughput_comparison.png    # Figure 1 — throughput baseline vs QoS
+│   ├── jitter_comparison.png        # Figure 2 — jitter baseline vs QoS
+│   └── ovs_snapshots/              # engine_off/on × 3 trials dump_flows + queue_stats
+├── PERSON_C_README.md               # classifier results section (Person C Phase 3)
+├── PROJECT_HANDOFF_REPORT.md        # task-by-task handoff + phase status
 └── requirements.txt
 ```
 
@@ -475,17 +491,16 @@ Two bugs fixed in `classify_stream()`:
 
 ---
 
-## Remaining Work (Phase 3 — Report Assembly)
+## Remaining Work
 
-Phases 1 and 2 are complete. Remaining work is Phase 3 report assembly.
+Phases 1, 2, and report assembly (Phase 3) are complete.
 
 | Task | Owner | Status |
 |---|---|---|
-| Results table + chart (Table I) | Person A (Yamica) | ⏳ In progress |
-| Queue-config section (LaTeX) | Person B (Tanishka) | ✅ In `docs/implementation_section.tex` |
-| Classifier results section | Person C (Monica) | ✅ In `PERSON_C_README.md` |
-| Full report assembly + citation check | Person B (Tanishka) | ⏳ Waiting for Table I |
-| Master PPT | Yazhene | ⏳ In progress |
+| Results section (LaTeX) | Person A (Yamica) | ✅ `docs/phase3_results.tex` |
+| Queue-config + report assembly | Person B (Tanishka) | ✅ `docs/implementation_section.tex` |
+| Classifier results section | Person C (Monica) | ✅ `PERSON_C_README.md` |
+| Master PPT | Yazhene | ⏳ Pending |
 | Final group live demo run | All | ⏳ Before submission |
 | Commit history email rewrite | Yazhene | ⏳ After all pushes complete |
 
@@ -574,6 +589,6 @@ python3 automation/eval_classifier.py \
 
 | Person | Real name | Phase 1 | Phase 2 | Phase 3 |
 |---|---|---|---|---|
-| Person A | Yamica V | ✅ Table I experiment | ✅ OVS snapshots | ⏳ Results table/chart |
-| Person B | Tanishka K | ✅ Queue + OpenFlow verification | ✅ Snapshot review | ⏳ Report assembly |
+| Person A | Yamica V | ✅ Table I experiment | ✅ OVS snapshots | ✅ Results section (LaTeX) |
+| Person B | Tanishka K | ✅ Queue + OpenFlow verification | ✅ Snapshot review | ✅ Report assembly + citation check |
 | Person C | Monica R | ✅ 3-class classifier + live bugs | ✅ Holdout eval + dashboard | ✅ Classifier results section |
