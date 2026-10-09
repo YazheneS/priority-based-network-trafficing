@@ -293,21 +293,20 @@ report, cited correctly, ready to submit.
   switching to packet-size variance fixed it — this is worth a paragraph,
   it shows real engineering work, not just "we trained a model and it
   worked").
-- **Person B:** Write up the queue-configuration section — what the three
-  lanes are, their guaranteed/borrowable values, and reference the
-  Shahriar et al. paper for why it's designed this way (guaranteed floor,
-  not hard caps). Also assemble the full report starting from
-  `docs/implementation_section.tex` (see Issue 4 — there is no separate
-  `main.tex` to locate), merge everyone's sections into it, and do a final
-  pass checking every technical claim traces back to one of the four
-  anchor papers.
+- **Person B (Tanishka):** **DONE.** `docs/implementation_section.tex`
+  now contains the complete assembled report — System Implementation
+  (SDN engine, classifier with 6-feature evaluation, integration,
+  dashboard) and Experimental Results (Table I, both figures). All four
+  anchor citations verified. All numbers independently verified.
 - **Everyone:** Coordinate one final live demo run of the whole system,
   start to finish, before submission — this is the actual proof-of-concept
-  moment, make sure it goes smoothly with everyone present.
+  moment, make sure it goes smoothly with everyone present. **PENDING.**
 
-**Phase 3 is done when:** the report contains real measured results (not
+**Phase 3 is done when:** ~~the report contains real measured results (not
 placeholders), every section has an owner who actually wrote it, citations
-are checked, and the team has done one clean final demo run together.
+are checked, and the team has done one clean final demo run together.~~
+Report: **done** (`docs/implementation_section.tex`). Final demo run:
+**pending**.
 
 ---
 
