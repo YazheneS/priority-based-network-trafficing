@@ -577,10 +577,18 @@ don't force-add generated output into the repo.
 on held-out data — do not reuse the training CSV):
 ```bash
 source .venv/bin/activate
+# 1. Train the model (the .joblib is not committed to the repo)
+python3 classifier/traffic_classifier.py \
+  --train classifier/test_data/real_flows.csv \
+  --out classifier/test_data/model.real.joblib
+# 2. Evaluate on the held-out set (288 rows: 96 per tier)
 python3 automation/eval_classifier.py \
   --model classifier/test_data/model.real.joblib \
-  --test-data classifier/test_data/holdout_flows.csv   # capture this separately
+  --test-data classifier/test_data/holdout_flows.csv
 ```
+Expected: accuracy 0.976 on 288 samples. `holdout_flows.csv` was sampled from
+the `*_phase2.csv` files, so never train on those files, or the held-out
+result is no longer valid.
 
 ---
 ---
