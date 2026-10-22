@@ -10,7 +10,6 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{algorithm}
-\usepackage{algpseudocode}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
@@ -79,7 +78,7 @@ A React/Node.js dashboard provides live per-tier monitoring and an
 on/off control. Evaluation in a Mininet-emulated topology demonstrates
 an 84\% reduction in real-time jitter (5.11~ms to 0.84~ms) and a
 classifier holdout accuracy of 97.6\% on 288 fresh balanced samples,
-with zero packet loss throughout. Source code is available at
+with zero realtime packet loss. Source code is available at
 \url{https://github.com/YazheneS/priority-based-network-trafficing}.
 \end{abstract}
 
@@ -138,11 +137,12 @@ reassigned or traffic patterns evolve. Their analysis motivates the
 shift from static rule assignment to behavior-based classification.
 
 \subsection{Strict Scheduling Risks}
-Gorkemli et al.~\cite{gorkemli2015} analyze strict priority queuing in
-IEEE 802.1Q and TSN contexts. Under sustained high-priority load,
-lower-priority queues receive zero service. Their work motivates the
-guaranteed-floor design we adopt: every tier retains a non-zero
-minimum, even under contention.
+Gorkemli et al.~\cite{gorkemli2015} critique strict-precedence
+OpenFlow prioritization, where higher tiers are always served first:
+under sustained high-priority load, lower-priority queues can be
+starved of service. Their critique motivates the guaranteed-floor
+design we adopt: every tier retains a non-zero minimum, even under
+contention.
 
 \subsection{Behavioral Traffic Classification}
 Serag et al.~\cite{serag2025} classify network flows using per-packet
@@ -252,7 +252,7 @@ real-time before/after comparison.
 \input{docs/implementation_section}
 
 % =====================================================================
-\section{Implementation, Results, and Performance Analysis}
+\section{Experimental Setup and Availability}
 \label{sec:results-analysis}
 
 \subsection{Experimental Setup}
@@ -263,100 +263,8 @@ experiment script (\texttt{automation/run\_all.sh}) runs three 15-second
 trials for each engine state (OFF/ON), generating all three traffic
 types simultaneously. OVS queue snapshots are captured per trial
 (see \texttt{results/ovs\_snapshots/}) to verify rule installation.
-
-\subsection{Classifier Training}
-
-The decision tree was trained on 1,701 real captured Mininet flows:
-785 real-time (rate-limited UDP), 535 best-effort (curl-based HTTP
-bursts), and 381 bulk (iperf3 TCP under contention). NIC offloading
-(TSO/GSO/GRO) was disabled during all captures. The sixth feature,
-byte rate, was added after discovering that rate-limited real-time and
-uncapped bulk streams share similar packet-size/timing profiles on
-an idle link.
-
-\subsection{QoS Performance Results}
-
-Table~\ref{tab:table1} presents the full before/after comparison.
-The priority engine produces an 84\% reduction in real-time jitter
-(5.11~ms to 0.84~ms) and stabilizes real-time throughput at exactly
-3.00~Mbps (the configured UDP send rate) with zero variance.
-Best-effort throughput is unaffected. Bulk throughput decreases from
-1.39~Mbps to 0.96~Mbps—an expected and intentional result, as bulk is
-deprioritized toward its 1~Mbps guaranteed floor during contention.
-
-\begin{table}[t]
-\centering
-\caption{Baseline vs. QoS Performance. Mean $\pm$ std over 3 trials.}
-\label{tab:table1}
-\begin{tabular}{llcc}
-\hline
-\textbf{Traffic Class} & \textbf{Metric} & \textbf{Engine OFF} & \textbf{Engine ON} \\
-\hline
-Real-time & Throughput (Mbps) & $2.678 \pm 0.455$ & $\mathbf{3.000 \pm 0.000}$ \\
-          & Jitter (ms)       & $5.110 \pm 1.080$ & $\mathbf{0.836 \pm 0.290}$ \\
-          & Packet Loss (\%)  & 0.00              & 0.00 \\
-\hline
-Best-effort & Throughput (Mbps) & $5.461 \pm 1.248$ & $5.592 \pm 0.008$ \\
-\hline
-Bulk & Throughput (Mbps) & $1.391 \pm 1.576$ & $0.959 \pm 0.004$ \\
-\hline
-\end{tabular}
-\end{table}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{results/throughput_comparison.png}
-\caption{Throughput by traffic class, baseline vs. QoS-enabled.}
-\label{fig:throughput}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\columnwidth]{results/jitter_comparison.png}
-\caption{Real-time jitter, baseline vs. QoS-enabled (84\% reduction).}
-\label{fig:jitter}
-\end{figure}
-
-\subsection{Classifier Performance}
-
-The classifier was evaluated on 288 fresh held-out samples (96 per
-class, not used in training). Table~\ref{tab:classifier} reports
-per-class precision, recall, and F1-score. Overall accuracy is
-\textbf{97.6\%} (281/288 correct). All 96 best-effort samples were
-classified correctly. The seven errors occurred only between bulk and
-real-time classes: six bulk samples classified as real-time, one
-real-time sample classified as bulk. No best-effort misclassification
-was observed.
-
-\begin{table}[t]
-\centering
-\caption{Classifier holdout evaluation (288 fresh samples, 96/class).}
-\label{tab:classifier}
-\begin{tabular}{lcccc}
-\hline
-\textbf{Tier} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{n} \\
-\hline
-Best-effort & 1.000 & 1.000 & 1.000 & 96 \\
-Bulk        & 0.989 & 0.938 & 0.963 & 96 \\
-Real-time   & 0.941 & 0.990 & 0.964 & 96 \\
-\hline
-\textbf{Overall} & \multicolumn{3}{c}{\textbf{97.6\%}} & 288 \\
-\hline
-\end{tabular}
-\end{table}
-
-\subsection{Live Classifier Validation}
-
-Two bugs were identified and corrected during live testing:
-(1)~the timestamp source in the sniffing loop was changed from
-wall-clock \texttt{time.time()} to packet capture time
-\texttt{float(pkt.time)}, eliminating inter-arrival feature corruption
-under load; and (2)~the TCP control packet filter was changed from an
-exact flags match (\texttt{flags=="A"}) to a payload-length check
-(\texttt{len(payload)==0}), catching ACKs with ECN bits set, SYN-ACKs,
-and FIN-ACKs that were forming spurious 54-byte flow windows. After
-these fixes and disabling NIC TSO/GSO/GRO offloading, a targeted
-idle-link test correctly classified uncapped TCP bulk traffic as bulk.
+Classifier training and QoS performance results are reported in
+Section~\ref{sec:implementation}.
 
 \subsection{GitHub Repository}
 
@@ -388,8 +296,8 @@ integrated into a single working pipeline for the first time.
 
 Experimental results on a Mininet-emulated campus segment show an
 84\% reduction in real-time jitter (5.11~ms to 0.84~ms) and 97.6\%
-classifier accuracy on 288 fresh held-out samples, with zero packet
-loss throughout. The implementation is open-source and reproducible.
+classifier accuracy on 288 fresh held-out samples, with zero
+realtime packet loss. The implementation is open-source and reproducible.
 
 Future work includes scaling to multi-switch topologies, extending the
 classifier to additional traffic categories, and evaluating the system
