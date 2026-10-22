@@ -1,0 +1,402 @@
+% =====================================================================
+% Priority-Based Network Traffic Management for Campus Networks
+% IEEE Conference Paper — Full Draft
+% CS23502 Mini-Project, MIT Campus, Anna University
+% =====================================================================
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{hyperref}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+% =====================================================================
+\title{Priority-Based Network Traffic Management for Campus Networks
+Using Software-Defined Networking and Behavioral Classification}
+
+\author{
+\IEEEauthorblockN{Yazhene S}
+\IEEEauthorblockA{Reg. No.: [Your Reg. No.]\\
+\textit{Dept. of Computer Science and Engineering}\\
+MIT Campus, Anna University\\
+Chennai, India\\
+yazh.yazhene@gmail.com}
+\and
+\IEEEauthorblockN{Yamica V}
+\IEEEauthorblockA{Reg. No.: [Reg. No.]\\
+\textit{Dept. of Computer Science and Engineering}\\
+MIT Campus, Anna University\\
+Chennai, India\\
+yamicavarrunkumar@gmail.com}
+\and
+\IEEEauthorblockN{Tanishka K}
+\IEEEauthorblockA{Reg. No.: [Reg. No.]\\
+\textit{Dept. of Computer Science and Engineering}\\
+MIT Campus, Anna University\\
+Chennai, India\\
+tanishkakathervel496@gmail.com}
+\and
+\IEEEauthorblockN{Monica R}
+\IEEEauthorblockA{Reg. No.: [Reg. No.]\\
+\textit{Dept. of Computer Science and Engineering}\\
+MIT Campus, Anna University\\
+Chennai, India\\
+moni142006@gmail.com}
+}
+
+\maketitle
+
+% =====================================================================
+\begin{abstract}
+On a shared campus network link, video-conferencing traffic and
+large-file downloads are treated identically by default. Under
+contention the video call degrades—dropped frames and lag—even
+though it is far more delay-sensitive than the download. We propose
+and evaluate a Software-Defined Networking (SDN) system that
+automatically classifies network flows by their observed packet-level
+behavior and enforces differentiated Quality-of-Service (QoS) without
+manual configuration or static IP/port rules. A shallow decision-tree
+classifier extracts six behavioral features per 20-packet window and
+assigns each flow to one of three service tiers (real-time, best-effort,
+bulk). An os-ken/OpenFlow~1.3 controller then maps classified flows to
+Linux-HTB queues with guaranteed minimum bandwidth floors (6/2/1~Mbps)
+and borrowable ceilings (10/8/10~Mbps), following a starvation-safe
+design that prevents lower-priority traffic from being completely starved.
+A React/Node.js dashboard provides live per-tier monitoring and an
+on/off control. Evaluation in a Mininet-emulated topology demonstrates
+an 84\% reduction in real-time jitter (5.11~ms to 0.84~ms) and a
+classifier holdout accuracy of 97.6\% on 288 fresh balanced samples,
+with zero packet loss throughout. Source code is available at
+\url{https://github.com/YazheneS/priority-based-network-trafficing}.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Software-Defined Networking, Quality of Service, Traffic Classification,
+OpenFlow, Mininet, Decision Tree, Campus Networks, HTB Queuing
+\end{IEEEkeywords}
+
+% =====================================================================
+\section{Introduction}
+\label{sec:intro}
+
+Campus networks routinely carry heterogeneous traffic—video
+conferencing, interactive browsing, and bulk file transfers—sharing
+the same physical link. Without differentiation, these flows compete
+equally for bandwidth. When a large file transfer saturates the link,
+real-time flows such as video calls suffer disproportionately because
+even small queuing delays accumulate into perceptible jitter and
+latency.
+
+Traditional QoS approaches address this through static rules: fixed
+IP addresses or TCP/UDP port numbers determine priority. Deo et
+al.~\cite{deo2024} demonstrate that such static assignments fail in
+modern environments where traffic patterns are dynamic and
+port-based classification is easily circumvented. Software-Defined
+Networking (SDN) offers a programmable alternative where flow
+management is centralized, but static SDN rules suffer the same
+brittleness. Gorkemli et al.~\cite{gorkemli2015} show that strict
+priority-based scheduling—always serving tier~1 before tier~2 before
+tier~3—risks completely starving lower-priority traffic under sustained
+higher-priority load.
+
+This work addresses both limitations by combining behavioral traffic
+classification with a fairness-aware SDN priority engine. Serag et
+al.~\cite{serag2025} demonstrate that packet-size and timing statistics
+alone are sufficient to distinguish interactive from bulk traffic
+without deep packet inspection. Shahriar et al.~\cite{shahriar2024}
+formalize a bandwidth-splitting scheme with guaranteed minimum floors
+per tier, preventing starvation while still enforcing priority.
+
+Our contribution is the integration of these four ideas into a single,
+fully automated pipeline: no single prior system combines behavioral
+classification, starvation-safe queuing, live enforcement via
+OpenFlow, and a monitoring dashboard end-to-end. We implement, test,
+and measure this system in a Mininet topology under controlled
+traffic, reporting before/after results across all three service tiers.
+
+% =====================================================================
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Static QoS Limitations}
+Deo et al.~\cite{deo2024} evaluate port- and IP-based prioritization
+in practice and show consistent failures when port numbers are
+reassigned or traffic patterns evolve. Their analysis motivates the
+shift from static rule assignment to behavior-based classification.
+
+\subsection{Strict Scheduling Risks}
+Gorkemli et al.~\cite{gorkemli2015} analyze strict priority queuing in
+IEEE 802.1Q and TSN contexts. Under sustained high-priority load,
+lower-priority queues receive zero service. Their work motivates the
+guaranteed-floor design we adopt: every tier retains a non-zero
+minimum, even under contention.
+
+\subsection{Behavioral Traffic Classification}
+Serag et al.~\cite{serag2025} classify network flows using per-packet
+statistical features (mean and variance of packet size and
+inter-arrival time) through a machine-learning model, without
+inspecting payload content. This approach is robust to encryption and
+port reassignment. We extend it with a sixth feature—achieved byte
+rate across a packet window—to resolve overlap between rate-limited
+real-time streams and uncapped bulk streams that share similar
+packet-level timing statistics.
+
+\subsection{Fairness-Aware Bandwidth Splitting}
+Shahriar et al.~\cite{shahriar2024} formalize weighted bandwidth
+allocation with per-tier guaranteed minimums in SDN environments. The
+tier receives at least its guaranteed rate regardless of higher-tier
+demand, and can borrow spare capacity up to a ceiling when other tiers
+are idle. We implement this formulation directly in our Linux-HTB queue
+configuration.
+
+% =====================================================================
+\section{System Model}
+\label{sec:model}
+
+Let the shared link have capacity $C$ (10~Mbps in our evaluation).
+Define three service tiers $\mathcal{T} = \{t_0, t_1, t_2\}$
+(real-time, best-effort, bulk). Each tier $t_i$ is assigned:
+\begin{itemize}
+  \item A guaranteed minimum rate $g_i > 0$, such that
+        $\sum_i g_i \leq C$.
+  \item A ceiling $c_i \leq C$, the maximum rate tier $t_i$ may
+        consume when spare capacity is available.
+\end{itemize}
+
+In our configuration, $g = [6, 2, 1]$~Mbps and $c = [10, 8, 10]$~Mbps.
+The sum of guarantees is $9 \leq 10 = C$, leaving 1~Mbps of
+over-subscription headroom.
+
+Each incoming flow $f$ is characterized by a feature vector
+$\mathbf{x}_f \in \mathbb{R}^6$ extracted from a sliding window
+of $W = 20$ packets:
+\begin{equation}
+\mathbf{x}_f = \bigl[\mu_s,\,\sigma_s,\,\mu_\tau,\,\sigma_\tau,\,
+               B_f,\,R_f\bigr]
+\label{eq:features}
+\end{equation}
+where $\mu_s$ and $\sigma_s$ are the mean and standard deviation of
+packet sizes, $\mu_\tau$ and $\sigma_\tau$ are the mean and standard
+deviation of inter-arrival times, $B_f = \sigma_s / \mu_s$ is the
+burstiness ratio, and $R_f = \sum_w \text{size}_w / \Delta T_w$ is
+the achieved byte rate over window duration $\Delta T_w$.
+
+A decision tree classifier $\hat{t} = h(\mathbf{x}_f)$ maps each
+feature vector to a tier prediction. The controller then installs an
+OpenFlow rule assigning flow $f$ to the corresponding HTB queue.
+
+% =====================================================================
+\section{Proposed System Architecture}
+\label{sec:architecture}
+
+The system comprises four interconnected components forming a
+closed-loop pipeline, as shown in Fig.~\ref{fig:architecture}.
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox{0.9\columnwidth}{\centering\vspace{0.3cm}
+\textbf{Traffic Sources} (h1, h2, h3)\\
+$\downarrow$\\
+\textbf{Open vSwitch s1} (Q0/Q1/Q2 HTB queues)\\
+$\updownarrow$ \hspace{0.5cm} $\updownarrow$\\
+\textbf{Classifier} \hspace{0.3cm} \textbf{Controller (os-ken)}\\
+(6-feature DT) \hspace{0.3cm} (OpenFlow 1.3 rules)\\
+$\downarrow$\\
+\textbf{Dashboard} (React/Node.js)
+\vspace{0.3cm}}}
+\caption{Four-component system architecture: traffic sources feed the
+SDN switch, which mirrors traffic to the classifier; the controller
+installs per-flow rules; the dashboard monitors and controls the engine.}
+\label{fig:architecture}
+\end{figure}
+
+\textbf{Mininet Topology:} Four virtual hosts (h1–h4) connected via
+a single Open vSwitch (s1) emulate a campus access segment. h1, h2,
+and h3 generate real-time (UDP, port~5000), best-effort (TCP, port~5100),
+and bulk (TCP, port~5201) traffic respectively toward h4. The link
+capacity is 10~Mbps.
+
+\textbf{SDN Priority Engine:} The os-ken controller configures three
+Linux-HTB queues on s1's egress port and installs OpenFlow~1.3 rules
+mapping each classified flow to its queue. Port-match rules at
+priority~20 direct real-time and bulk traffic to Q0 and Q2; a
+priority-5 catch-all IP rule routes best-effort to Q1.
+
+\textbf{Behavioral Classifier:} A shallow decision tree (max depth~4)
+trained on 1,701 real Mininet-captured flows classifies each 20-packet
+window into a tier. Classification runs in a live sniffing loop on the
+switch interface.
+
+\textbf{Live Dashboard:} A React frontend subscribes to a Node.js
+WebSocket backend that polls per-tier metrics. An ON/OFF toggle sends
+a REST call to the controller's \texttt{/toggle} endpoint, enabling
+real-time before/after comparison.
+
+% =====================================================================
+\section{Algorithm}
+\label{sec:algorithm}
+
+\input{docs/implementation_section}
+
+% =====================================================================
+\section{Implementation, Results, and Performance Analysis}
+\label{sec:results-analysis}
+
+\subsection{Experimental Setup}
+
+All experiments were conducted on WSL2 Ubuntu 24.04 using Mininet
+2.3.0, Open vSwitch 2.17, os-ken 2.1, and Python 3.11. The automated
+experiment script (\texttt{automation/run\_all.sh}) runs three 15-second
+trials for each engine state (OFF/ON), generating all three traffic
+types simultaneously. OVS queue snapshots are captured per trial
+(see \texttt{results/ovs\_snapshots/}) to verify rule installation.
+
+\subsection{Classifier Training}
+
+The decision tree was trained on 1,701 real captured Mininet flows:
+785 real-time (rate-limited UDP), 535 best-effort (curl-based HTTP
+bursts), and 381 bulk (iperf3 TCP under contention). NIC offloading
+(TSO/GSO/GRO) was disabled during all captures. The sixth feature,
+byte rate, was added after discovering that rate-limited real-time and
+uncapped bulk streams share similar packet-size/timing profiles on
+an idle link.
+
+\subsection{QoS Performance Results}
+
+Table~\ref{tab:table1} presents the full before/after comparison.
+The priority engine produces an 84\% reduction in real-time jitter
+(5.11~ms to 0.84~ms) and stabilizes real-time throughput at exactly
+3.00~Mbps (the configured UDP send rate) with zero variance.
+Best-effort throughput is unaffected. Bulk throughput decreases from
+1.39~Mbps to 0.96~Mbps—an expected and intentional result, as bulk is
+deprioritized toward its 1~Mbps guaranteed floor during contention.
+
+\begin{table}[t]
+\centering
+\caption{Baseline vs. QoS Performance. Mean $\pm$ std over 3 trials.}
+\label{tab:table1}
+\begin{tabular}{llcc}
+\hline
+\textbf{Traffic Class} & \textbf{Metric} & \textbf{Engine OFF} & \textbf{Engine ON} \\
+\hline
+Real-time & Throughput (Mbps) & $2.678 \pm 0.455$ & $\mathbf{3.000 \pm 0.000}$ \\
+          & Jitter (ms)       & $5.110 \pm 1.080$ & $\mathbf{0.836 \pm 0.290}$ \\
+          & Packet Loss (\%)  & 0.00              & 0.00 \\
+\hline
+Best-effort & Throughput (Mbps) & $5.461 \pm 1.248$ & $5.592 \pm 0.008$ \\
+\hline
+Bulk & Throughput (Mbps) & $1.391 \pm 1.576$ & $0.959 \pm 0.004$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{results/throughput_comparison.png}
+\caption{Throughput by traffic class, baseline vs. QoS-enabled.}
+\label{fig:throughput}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{results/jitter_comparison.png}
+\caption{Real-time jitter, baseline vs. QoS-enabled (84\% reduction).}
+\label{fig:jitter}
+\end{figure}
+
+\subsection{Classifier Performance}
+
+The classifier was evaluated on 288 fresh held-out samples (96 per
+class, not used in training). Table~\ref{tab:classifier} reports
+per-class precision, recall, and F1-score. Overall accuracy is
+\textbf{97.6\%} (281/288 correct). All 96 best-effort samples were
+classified correctly. The seven errors occurred only between bulk and
+real-time classes: six bulk samples classified as real-time, one
+real-time sample classified as bulk. No best-effort misclassification
+was observed.
+
+\begin{table}[t]
+\centering
+\caption{Classifier holdout evaluation (288 fresh samples, 96/class).}
+\label{tab:classifier}
+\begin{tabular}{lcccc}
+\hline
+\textbf{Tier} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{n} \\
+\hline
+Best-effort & 1.000 & 1.000 & 1.000 & 96 \\
+Bulk        & 0.989 & 0.938 & 0.963 & 96 \\
+Real-time   & 0.941 & 0.990 & 0.964 & 96 \\
+\hline
+\textbf{Overall} & \multicolumn{3}{c}{\textbf{97.6\%}} & 288 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Live Classifier Validation}
+
+Two bugs were identified and corrected during live testing:
+(1)~the timestamp source in the sniffing loop was changed from
+wall-clock \texttt{time.time()} to packet capture time
+\texttt{float(pkt.time)}, eliminating inter-arrival feature corruption
+under load; and (2)~the TCP control packet filter was changed from an
+exact flags match (\texttt{flags=="A"}) to a payload-length check
+(\texttt{len(payload)==0}), catching ACKs with ECN bits set, SYN-ACKs,
+and FIN-ACKs that were forming spurious 54-byte flow windows. After
+these fixes and disabling NIC TSO/GSO/GRO offloading, a targeted
+idle-link test correctly classified uncapped TCP bulk traffic as bulk.
+
+\subsection{GitHub Repository}
+
+The complete source code, training data, experiment scripts, and
+documentation are publicly available at:\\
+\url{https://github.com/YazheneS/priority-based-network-trafficing}
+
+The repository includes:
+\begin{itemize}
+  \item Mininet topology and OVS queue setup scripts
+  \item Behavioral classifier with 1,701-sample training set
+  \item Automated experiment runner and eval scripts
+  \item Real-time monitoring dashboard (React + Node.js)
+  \item Full Phase 1/2/3 verification documentation
+\end{itemize}
+
+% =====================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented a fully automated SDN-based QoS system for campus
+networks that classifies traffic by behavior (not port or IP) and
+enforces differentiated service through a starvation-safe priority
+engine. Four contributions from four independent papers—behavioral
+classification (Serag et al.), fairness-aware bandwidth splitting
+(Shahriar et al.), starvation prevention (Gorkemli et al.), and
+motivation for behavioral over static approaches (Deo et al.)—are
+integrated into a single working pipeline for the first time.
+
+Experimental results on a Mininet-emulated campus segment show an
+84\% reduction in real-time jitter (5.11~ms to 0.84~ms) and 97.6\%
+classifier accuracy on 288 fresh held-out samples, with zero packet
+loss throughout. The implementation is open-source and reproducible.
+
+Future work includes scaling to multi-switch topologies, extending the
+classifier to additional traffic categories, and evaluating the system
+under higher-bandwidth links with more realistic campus traffic mixes.
+
+% =====================================================================
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}
