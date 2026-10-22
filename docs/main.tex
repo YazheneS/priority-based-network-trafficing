@@ -28,28 +28,28 @@ Using Software-Defined Networking and Behavioral Classification}
 
 \author{
 \IEEEauthorblockN{Yazhene S}
-\IEEEauthorblockA{Reg. No.: [Your Reg. No.]\\
+\IEEEauthorblockA{Reg. No.: 2024503552\\
 \textit{Dept. of Computer Science and Engineering}\\
 MIT Campus, Anna University\\
 Chennai, India\\
 yazh.yazhene@gmail.com}
 \and
 \IEEEauthorblockN{Yamica V}
-\IEEEauthorblockA{Reg. No.: [Reg. No.]\\
+\IEEEauthorblockA{Reg. No.: 2024503302\\
 \textit{Dept. of Computer Science and Engineering}\\
 MIT Campus, Anna University\\
 Chennai, India\\
 yamicavarrunkumar@gmail.com}
 \and
 \IEEEauthorblockN{Tanishka K}
-\IEEEauthorblockA{Reg. No.: [Reg. No.]\\
+\IEEEauthorblockA{Reg. No.: 2024503530\\
 \textit{Dept. of Computer Science and Engineering}\\
 MIT Campus, Anna University\\
 Chennai, India\\
 tanishkakathervel496@gmail.com}
 \and
 \IEEEauthorblockN{Monica R}
-\IEEEauthorblockA{Reg. No.: [Reg. No.]\\
+\IEEEauthorblockA{Reg. No.: 2024503510\\
 \textit{Dept. of Computer Science and Engineering}\\
 MIT Campus, Anna University\\
 Chennai, India\\
@@ -100,16 +100,25 @@ even small queuing delays accumulate into perceptible jitter and
 latency.
 
 Traditional QoS approaches address this through static rules: fixed
-IP addresses or TCP/UDP port numbers determine priority. Deo et
-al.~\cite{deo2024} demonstrate that such static assignments fail in
-modern environments where traffic patterns are dynamic and
-port-based classification is easily circumvented. Software-Defined
-Networking (SDN) offers a programmable alternative where flow
-management is centralized, but static SDN rules suffer the same
-brittleness. Gorkemli et al.~\cite{gorkemli2015} show that strict
+IP addresses or TCP/UDP port numbers determine priority, with bandwidth
+assigned to each class by hand. Deo et al.~\cite{deo2024} instead
+allocate bandwidth to OpenFlow QoS classes purely from observed flow
+statistics via OpenFlow meters, avoiding manually fixed per-class
+shares; this motivates deriving allocation and classification decisions
+from observed traffic behavior rather than static configuration.
+Software-Defined Networking (SDN) offers a programmable alternative
+where flow management is centralized, but static SDN rules suffer the
+same brittleness. Gorkemli et al.~\cite{gorkemli2015} show that strict
 priority-based scheduling—always serving tier~1 before tier~2 before
 tier~3—risks completely starving lower-priority traffic under sustained
-higher-priority load.
+higher-priority load. Related QoS mechanisms in the wider literature
+span meter- and slicing-based burst control~\cite{slicing2025}, hybrid
+IP/SDN QoS architectures~\cite{hussein2025}, scalable low-latency
+transport~\cite{fairhurst2021}, campus-network QoS
+policy~\cite{qospolicies2019}, application-specific video QoS over
+SDN~\cite{almaqri2016,shvc2022}, and cautions on emulation-based SDN
+evaluation~\cite{emulation2022}, all consulted while scoping this
+project's design space.
 
 This work addresses both limitations by combining behavioral traffic
 classification with a fairness-aware SDN priority engine. Serag et
@@ -130,11 +139,13 @@ traffic, reporting before/after results across all three service tiers.
 \section{Related Work}
 \label{sec:related}
 
-\subsection{Static QoS Limitations}
-Deo et al.~\cite{deo2024} evaluate port- and IP-based prioritization
-in practice and show consistent failures when port numbers are
-reassigned or traffic patterns evolve. Their analysis motivates the
-shift from static rule assignment to behavior-based classification.
+\subsection{Flow-Statistics-Based Allocation}
+Deo et al.~\cite{deo2024} propose an adaptive bandwidth allocation
+algorithm that uses OpenFlow meters and per-flow statistics collected
+directly from switches, rather than fixed, manually assigned shares
+per class. Their flow-statistics-driven approach motivates our use of
+observed behavior, rather than static configuration, to drive
+allocation decisions.
 
 \subsection{Strict Scheduling Risks}
 Gorkemli et al.~\cite{gorkemli2015} critique strict-precedence

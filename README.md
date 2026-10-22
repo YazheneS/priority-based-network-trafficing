@@ -4,6 +4,9 @@
 
 CS23502 — Networks and Data Communication | 12-Week Mini-Project
 
+**GitHub:** https://github.com/YazheneS/priority-based-network-trafficing
+**Final report:** [`docs/main.tex`](docs/main.tex) / [`docs/main.pdf`](docs/main.pdf) (IEEE conference format)
+
 ---
 
 ## Table of Contents
@@ -148,6 +151,10 @@ campus-qos-project/
 │   ├── traffic_classifier.py        # 6-feature decision tree + rule-based fallback
 │   └── test_data/
 │       ├── real_flows.csv           # 1,701 real captured Mininet flows (training set)
+│       ├── holdout_flows.csv        # 288-row held-out eval set (96/class, gives the 97.6% accuracy)
+│       ├── realtime_phase2.csv      # Phase 2 realtime class samples (source for holdout)
+│       ├── besteffort_phase2.csv    # Phase 2 best-effort class samples (source for holdout)
+│       ├── bulk_phase2.csv          # Phase 2 bulk class samples (source for holdout)
 │       ├── test_flows.csv           # synthetic holdout samples
 │       └── test_flows.synthetic.csv # extended synthetic test set
 ├── integration/
@@ -164,8 +171,10 @@ campus-qos-project/
 │   ├── backend/server.js            # Node/Express + WebSocket, lastMetrics cache
 │   └── frontend/src/App.jsx         # React live dashboard + on/off toggle
 ├── docs/
-│   ├── implementation_section.tex   # complete assembled report (System Implementation
-│   │                                #   + Experimental Results, all 4 citations)
+│   ├── main.tex                     # FINAL REPORT — full IEEE conference paper, \input's below
+│   ├── main.pdf                     # compiled final report
+│   ├── refs.bib                     # bibliography (10 references)
+│   ├── implementation_section.tex   # System Implementation + Experimental Results, \input by main.tex
 │   ├── phase3_results.tex           # standalone Experimental Results section
 │   ├── table1.tex                   # standalone Table I (throughput/jitter/loss)
 │   ├── figures.tex                  # standalone figure blocks
