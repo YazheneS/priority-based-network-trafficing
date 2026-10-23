@@ -216,23 +216,17 @@ OpenFlow rule assigning flow $f$ to the corresponding HTB queue.
 The system comprises four interconnected components forming a
 closed-loop pipeline, as shown in Fig.~\ref{fig:architecture}.
 
-\begin{figure}[h]
+\begin{figure*}[t]
 \centering
-\fbox{\parbox{0.9\columnwidth}{\centering\vspace{0.3cm}
-\textbf{Traffic Sources} (h1, h2, h3)\\
-$\downarrow$\\
-\textbf{Open vSwitch s1} (Q0/Q1/Q2 HTB queues)\\
-$\updownarrow$ \hspace{0.5cm} $\updownarrow$\\
-\textbf{Classifier} \hspace{0.3cm} \textbf{Controller (os-ken)}\\
-(6-feature DT) \hspace{0.3cm} (OpenFlow 1.3 rules)\\
-$\downarrow$\\
-\textbf{Dashboard} (React/Node.js)
-\vspace{0.3cm}}}
-\caption{Four-component system architecture: traffic sources feed the
-SDN switch, which mirrors traffic to the classifier; the controller
-installs per-flow rules; the dashboard monitors and controls the engine.}
+\includegraphics[width=0.92\textwidth]{docs/diagrams/architecture.pdf}
+\caption{System architecture: traffic sources feed the SDN switch,
+which mirrors traffic to the integration bridge and classifier (one
+process); the controller installs per-flow OpenFlow rules; the
+dashboard backend and frontend monitor and control the engine; the
+experiment harness drives traffic and produces the results consumed
+by the final report.}
 \label{fig:architecture}
-\end{figure}
+\end{figure*}
 
 \textbf{Mininet Topology:} Four virtual hosts (h1–h4) connected via
 a single Open vSwitch (s1) emulate a campus access segment. h1, h2,

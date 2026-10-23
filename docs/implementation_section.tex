@@ -97,6 +97,14 @@ rule installation, so that the classifier (Section~\ref{subsec:classifier})
 and dashboard (Section~\ref{subsec:dashboard}) can drive the engine without
 depending on OpenFlow internals directly.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\columnwidth]{docs/diagrams/flow.pdf}
+\caption{End-to-end classification and enforcement flow: from a
+sniffed packet to an installed OpenFlow rule.}
+\label{fig:flow}
+\end{figure}
+
 \subsection{Behavioral Traffic Classifier}
 \label{subsec:classifier}
 
