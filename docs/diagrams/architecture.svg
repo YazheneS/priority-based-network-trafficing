@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 640" font-family="Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+  </defs>
+  <style>
+    .lbl{font-size:13.5px;fill:#111;font-weight:600;}
+    .sub{font-size:10.5px;fill:#333;}
+    .edge{stroke:#333;stroke-width:1.6;fill:none;marker-end:url(#arrow);}
+    .edgeDash{stroke:#555;stroke-width:1.3;fill:none;stroke-dasharray:5,4;marker-end:url(#arrow);}
+    .elbl{font-size:9.5px;fill:#333;font-style:italic;}
+  </style>
+
+  <rect x="0" y="0" width="1080" height="640" fill="#ffffff"/>
+
+  <rect x="20" y="40" width="190" height="100" rx="8" stroke="#333" stroke-width="1.5" fill="#E8F0FE"/>
+  <text x="115" y="62" text-anchor="middle" class="lbl">Mininet Hosts</text>
+  <text x="115" y="80" text-anchor="middle" class="sub">h1 realtime (UDP:5000)</text>
+  <text x="115" y="94" text-anchor="middle" class="sub">h2 besteffort</text>
+  <text x="115" y="108" text-anchor="middle" class="sub">h3 bulk (TCP:5201)</text>
+  <text x="115" y="122" text-anchor="middle" class="sub">h4 receiver (10.0.0.4)</text>
+
+  <rect x="295" y="40" width="210" height="100" rx="8" stroke="#333" stroke-width="1.5" fill="#FFF3CD"/>
+  <text x="400" y="62" text-anchor="middle" class="lbl">Open vSwitch s1</text>
+  <text x="400" y="80" text-anchor="middle" class="sub">OpenFlow 1.3</text>
+  <text x="400" y="94" text-anchor="middle" class="sub">HTB queues Q0/Q1/Q2</text>
+  <text x="400" y="108" text-anchor="middle" class="sub">bottleneck s1-eth4 (10 Mbps)</text>
+  <text x="400" y="122" text-anchor="middle" class="sub">topology/setup_queues.sh</text>
+
+  <rect x="650" y="40" width="230" height="100" rx="8" stroke="#333" stroke-width="1.5" fill="#D9F2E6"/>
+  <text x="765" y="62" text-anchor="middle" class="lbl">os-ken Controller</text>
+  <text x="765" y="80" text-anchor="middle" class="sub">controller/priority_controller.py</text>
+  <text x="765" y="94" text-anchor="middle" class="sub">REST :8080 — /classify /toggle /status</text>
+  <text x="765" y="108" text-anchor="middle" class="sub">installs set_queue rules (prio 25&gt;20&gt;5)</text>
+  <text x="765" y="122" text-anchor="middle" class="sub">OpenFlow 1.3 @ 127.0.0.1:6653</text>
+
+  <rect x="650" y="240" width="230" height="110" rx="8" stroke="#333" stroke-width="1.5" fill="#FDE2E2"/>
+  <text x="765" y="262" text-anchor="middle" class="lbl">Integration Bridge + Classifier</text>
+  <text x="765" y="280" text-anchor="middle" class="sub">(one process: integration/bridge.py</text>
+  <text x="765" y="294" text-anchor="middle" class="sub">calls classifier/traffic_classifier.py)</text>
+  <text x="765" y="310" text-anchor="middle" class="sub">sniffs s1-eth1..3 · 6-feature window</text>
+  <text x="765" y="324" text-anchor="middle" class="sub">decision tree (depth 4) + rule fallback</text>
+  <text x="765" y="338" text-anchor="middle" class="sub">writes metrics_store.json</text>
+
+  <rect x="400" y="240" width="210" height="110" rx="8" stroke="#333" stroke-width="1.5" fill="#F0F0F0"/>
+  <text x="505" y="262" text-anchor="middle" class="lbl">metrics_store.json</text>
+  <text x="505" y="282" text-anchor="middle" class="sub">per-flow events: tier,</text>
+  <text x="505" y="296" text-anchor="middle" class="sub">features, jitter_estimate_ms</text>
+  <text x="505" y="310" text-anchor="middle" class="sub">+ controller_status</text>
+  <text x="505" y="324" text-anchor="middle" class="sub">(polled every 2s)</text>
+
+  <rect x="150" y="240" width="210" height="110" rx="8" stroke="#333" stroke-width="1.5" fill="#FFE8CC"/>
+  <text x="255" y="262" text-anchor="middle" class="lbl">Dashboard Backend</text>
+  <text x="255" y="280" text-anchor="middle" class="sub">dashboard/backend/server.js</text>
+  <text x="255" y="294" text-anchor="middle" class="sub">Node/Express, port 4000</text>
+  <text x="255" y="308" text-anchor="middle" class="sub">watches file (chokidar) &#8594; WS /ws</text>
+  <text x="255" y="322" text-anchor="middle" class="sub">POST /api/toggle &#8594; proxies /toggle</text>
+
+  <rect x="20" y="240" width="110" height="110" rx="8" stroke="#333" stroke-width="1.5" fill="#FFE8CC"/>
+  <text x="75" y="262" text-anchor="middle" class="lbl">Dashboard</text>
+  <text x="75" y="278" text-anchor="middle" class="lbl">Frontend</text>
+  <text x="75" y="296" text-anchor="middle" class="sub">React App.jsx</text>
+  <text x="75" y="310" text-anchor="middle" class="sub">jitter chart,</text>
+  <text x="75" y="324" text-anchor="middle" class="sub">ON/OFF toggle</text>
+
+  <rect x="20" y="450" width="300" height="100" rx="8" stroke="#333" stroke-width="1.5" fill="#EFEFEF"/>
+  <text x="170" y="472" text-anchor="middle" class="lbl">Experiment Harness</text>
+  <text x="170" y="490" text-anchor="middle" class="sub">automation/run_all.sh</text>
+  <text x="170" y="504" text-anchor="middle" class="sub">3 trials x 15 s, engine OFF/ON</text>
+  <text x="170" y="518" text-anchor="middle" class="sub">eval_classifier.py (holdout accuracy)</text>
+  <text x="170" y="532" text-anchor="middle" class="sub">&#8594; results/table1_*.csv, *.png</text>
+
+  <rect x="650" y="450" width="280" height="100" rx="8" stroke="#333" stroke-width="1.5" fill="#E8F0FE"/>
+  <text x="790" y="472" text-anchor="middle" class="lbl">Final Report (docs/)</text>
+  <text x="790" y="490" text-anchor="middle" class="sub">main.tex (IEEE) \input's</text>
+  <text x="790" y="504" text-anchor="middle" class="sub">implementation_section.tex</text>
+  <text x="790" y="518" text-anchor="middle" class="sub">reads results/*.png, cites refs.bib</text>
+
+  <path class="edge" d="M210,90 H295"/>
+  <text x="252" y="83" text-anchor="middle" class="elbl">data traffic</text>
+
+  <path class="edge" d="M505,90 H650"/>
+  <text x="577" y="76" text-anchor="middle" class="elbl">OpenFlow 1.3</text>
+  <text x="577" y="99" text-anchor="middle" class="elbl">set_queue</text>
+
+  <path class="edge" d="M400,140 Q400,200 650,250"/>
+  <text x="440" y="195" text-anchor="middle" class="elbl">passive sniff</text>
+  <text x="440" y="207" text-anchor="middle" class="elbl">(s1-eth1..3)</text>
+
+  <path class="edgeDash" d="M850,240 V140"/>
+  <text x="960" y="178" text-anchor="middle" class="elbl">POST /classify</text>
+  <text x="960" y="190" text-anchor="middle" class="elbl">{dpid,tier,...}</text>
+  <text x="960" y="202" text-anchor="middle" class="elbl">GET /status</text>
+  <text x="960" y="214" text-anchor="middle" class="elbl">(polled 2s)</text>
+
+  <path class="edge" d="M650,295 H610"/>
+
+  <path class="edge" d="M400,295 H360"/>
+  <text x="380" y="282" text-anchor="middle" class="elbl">file watch</text>
+
+  <path class="edge" d="M150,280 H130"/>
+  <text x="140" y="268" text-anchor="middle" class="elbl">WS</text>
+
+  <path class="edgeDash" d="M130,322 H150"/>
+  <text x="140" y="340" text-anchor="middle" class="elbl">POST /api/toggle</text>
+
+  <path class="edgeDash" d="M300,255 Q470,165 650,100"/>
+  <text x="430" y="150" text-anchor="middle" class="elbl">proxies to POST /toggle</text>
+
+  <path class="edge" d="M170,450 V360 Q170,230 150,255"/>
+  <text x="60" y="400" text-anchor="middle" class="elbl">starts topo.py,</text>
+  <text x="60" y="412" text-anchor="middle" class="elbl">iperf3, toggles</text>
+  <text x="60" y="424" text-anchor="middle" class="elbl">engine directly</text>
+
+  <path class="edge" d="M320,500 H650"/>
+  <text x="485" y="493" text-anchor="middle" class="elbl">writes results/</text>
+
+  <path class="edge" d="M790,450 V350"/>
+  <text x="845" y="400" text-anchor="middle" class="elbl">accuracy,</text>
+  <text x="845" y="412" text-anchor="middle" class="elbl">figures</text>
+
+  <rect x="10" y="580" width="1060" height="50" fill="none" stroke="#999" stroke-dasharray="3,3"/>
+  <text x="25" y="598" class="sub" font-style="italic">Solid = direct function call or data write this code performs. Dashed = REST call with a named JSON endpoint.</text>
+  <text x="25" y="614" class="sub" font-style="italic">Component names, ports, and file paths are taken directly from the repository source (commit 840e300).</text>
+</svg>
